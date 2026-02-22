@@ -1,5 +1,4 @@
 import React from 'react';
-import { getPullStatus } from '../utils';
 
 export default function ProgressBar({ percent, status, height }) {
   const cls =

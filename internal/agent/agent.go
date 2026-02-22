@@ -1,4 +1,3 @@
-// Package agent implements the per-node Pulltrace agent.
 package agent
 
 import (
@@ -9,28 +8,36 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	ctrd "github.com/d44b/pulltrace/internal/containerd"
 	"github.com/d44b/pulltrace/internal/model"
 )
 
-// Config holds agent configuration.
-type Config struct {
-	NodeName        string
-	ServerURL       string
-	ContainerdSocket string
-	ReportInterval  time.Duration
-	LogLevel        string
+// allowedSocketPrefixes restricts the agent to containerd sockets, preventing
+// accidental or malicious redirection to other UNIX sockets on the host.
+var allowedSocketPrefixes = []string{
+	"/run/containerd/",
+	"/var/run/containerd/",
 }
 
-// ConfigFromEnv loads agent config from environment variables.
+type Config struct {
+	NodeName         string
+	ServerURL        string
+	ContainerdSocket string
+	ReportInterval   time.Duration
+	LogLevel         string
+	AgentToken       string
+}
+
 func ConfigFromEnv() Config {
 	c := Config{
-		NodeName:        os.Getenv("PULLTRACE_NODE_NAME"),
-		ServerURL:       os.Getenv("PULLTRACE_SERVER_URL"),
+		NodeName:         os.Getenv("PULLTRACE_NODE_NAME"),
+		ServerURL:        os.Getenv("PULLTRACE_SERVER_URL"),
 		ContainerdSocket: envOrDefault("PULLTRACE_CONTAINERD_SOCKET", "/run/containerd/containerd.sock"),
-		LogLevel:        envOrDefault("PULLTRACE_LOG_LEVEL", "info"),
+		LogLevel:         envOrDefault("PULLTRACE_LOG_LEVEL", "info"),
+		AgentToken:       os.Getenv("PULLTRACE_AGENT_TOKEN"),
 	}
 
 	if interval := os.Getenv("PULLTRACE_REPORT_INTERVAL"); interval != "" {
@@ -39,7 +46,7 @@ func ConfigFromEnv() Config {
 		}
 	}
 	if c.ReportInterval == 0 {
-		c.ReportInterval = 2 * time.Second
+		c.ReportInterval = 1 * time.Second
 	}
 
 	return c
@@ -52,7 +59,6 @@ func envOrDefault(key, defaultVal string) string {
 	return defaultVal
 }
 
-// Agent is the per-node Pulltrace agent.
 type Agent struct {
 	config  Config
 	watcher *ctrd.Watcher
@@ -60,7 +66,6 @@ type Agent struct {
 	logger  *slog.Logger
 }
 
-// New creates a new agent.
 func New(cfg Config) *Agent {
 	level := slog.LevelInfo
 	switch cfg.LogLevel {
@@ -75,21 +80,24 @@ func New(cfg Config) *Agent {
 	return &Agent{
 		config:  cfg,
 		watcher: ctrd.NewWatcher(cfg.ContainerdSocket, "k8s.io"),
-		client: &http.Client{
-			Timeout: 10 * time.Second,
-		},
-		logger: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})),
+		client:  &http.Client{Timeout: 10 * time.Second},
+		logger:  slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})),
 	}
 }
 
-// Run starts the agent main loop.
 func (a *Agent) Run(ctx context.Context) error {
 	a.logger.Info("starting pulltrace agent",
 		"node", a.config.NodeName,
 		"server", a.config.ServerURL,
 		"socket", a.config.ContainerdSocket,
 		"interval", a.config.ReportInterval,
+		"tokenAuth", a.config.AgentToken != "",
 	)
+
+	// Validate socket path to prevent connecting to non-containerd sockets.
+	if err := validateSocketPath(a.config.ContainerdSocket); err != nil {
+		return fmt.Errorf("socket path validation: %w", err)
+	}
 
 	if err := a.watcher.Connect(ctx); err != nil {
 		return fmt.Errorf("connecting to containerd: %w", err)
@@ -101,7 +109,6 @@ func (a *Agent) Run(ctx context.Context) error {
 	ticker := time.NewTicker(a.config.ReportInterval)
 	defer ticker.Stop()
 
-	// Retry loop with jitter for initial connection
 	for {
 		select {
 		case <-ctx.Done():
@@ -127,7 +134,6 @@ func (a *Agent) pollAndReport(ctx context.Context) error {
 		Pulls:     states,
 	}
 
-	// Log each active pull as JSON
 	for _, p := range states {
 		a.logger.Info("pull.progress",
 			"imageRef", p.ImageRef,
@@ -155,6 +161,9 @@ func (a *Agent) sendReport(ctx context.Context, report model.AgentReport) error 
 		return fmt.Errorf("creating request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if a.config.AgentToken != "" {
+		req.Header.Set("Authorization", "Bearer "+a.config.AgentToken)
+	}
 
 	resp, err := a.client.Do(req)
 	if err != nil {
@@ -167,4 +176,16 @@ func (a *Agent) sendReport(ctx context.Context, report model.AgentReport) error 
 	}
 
 	return nil
+}
+
+func validateSocketPath(path string) error {
+	for _, prefix := range allowedSocketPrefixes {
+		if strings.HasPrefix(path, prefix) {
+			return nil
+		}
+	}
+	return fmt.Errorf(
+		"socket path %q is not under an allowed prefix (%v); only containerd sockets are supported",
+		path, allowedSocketPrefixes,
+	)
 }

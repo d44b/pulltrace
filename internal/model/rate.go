@@ -18,9 +18,7 @@ type rateSample struct {
 }
 
 func NewRateCalculator(window time.Duration) *RateCalculator {
-	return &RateCalculator{
-		window: window,
-	}
+	return &RateCalculator{window: window}
 }
 
 func (r *RateCalculator) Add(bytes int64) {
@@ -45,8 +43,11 @@ func (r *RateCalculator) Rate() float64 {
 	if elapsed <= 0 {
 		return 0
 	}
-	totalBytes := last.bytes - first.bytes
-	return float64(totalBytes) / elapsed
+	total := last.bytes - first.bytes
+	if total < 0 {
+		return 0
+	}
+	return float64(total) / elapsed
 }
 
 func (r *RateCalculator) ETA(remaining int64) float64 {
@@ -63,6 +64,7 @@ func (r *RateCalculator) prune(now time.Time) {
 	for i < len(r.samples) && r.samples[i].timestamp.Before(cutoff) {
 		i++
 	}
+	// Keep one sample before the cutoff as an anchor for rate calculation.
 	if i > 0 && i < len(r.samples) {
 		r.samples = r.samples[i-1:]
 	}

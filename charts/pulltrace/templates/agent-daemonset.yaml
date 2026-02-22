@@ -1,3 +1,5 @@
+{{- include "pulltrace.validateRuntimeSocket" . -}}
+{{- if .Values.agent.runtimeSocket.enabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -15,19 +17,32 @@ spec:
         {{- include "pulltrace.agent.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "pulltrace.agent.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      # Agent needs root group access for containerd socket on Talos
+      # Agent needs root to access the containerd socket.
+      # All other privileges are dropped at container level.
       securityContext:
         runAsNonRoot: false
         runAsUser: 0
         runAsGroup: 0
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: pulltrace-agent
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"
           imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: PULLTRACE_NODE_NAME
               valueFrom:
@@ -42,6 +57,13 @@ spec:
                 configMapKeyRef:
                   name: {{ include "pulltrace.fullname" . }}-config
                   key: logLevel
+            {{- if or .Values.agent.auth.token .Values.agent.auth.existingSecret }}
+            - name: PULLTRACE_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (printf "%s-agent-token" (include "pulltrace.fullname" .)) .Values.agent.auth.existingSecret }}
+                  key: {{ default "token" .Values.agent.auth.existingSecretKey }}
+            {{- end }}
           volumeMounts:
             - name: containerd-socket
               mountPath: /run/containerd/containerd.sock
@@ -61,3 +83,4 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

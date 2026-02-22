@@ -38,11 +38,11 @@ var (
 		Help:      "Total number of pull errors.",
 	})
 
-	AgentReports = promauto.NewCounterVec(prometheus.CounterOpts{
+	AgentReports = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "pulltrace",
 		Name:      "agent_reports_total",
-		Help:      "Total agent reports received, by node.",
-	}, []string{"node"})
+		Help:      "Total agent reports received.",
+	})
 
 	SSEClients = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "pulltrace",

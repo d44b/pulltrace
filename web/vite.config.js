@@ -7,6 +7,7 @@ export default defineConfig({
     outDir: 'dist',
   },
   server: {
+    port: 3030,
     proxy: {
       '/api': 'http://localhost:8080',
     },

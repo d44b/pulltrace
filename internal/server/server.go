@@ -1,10 +1,9 @@
-// Package server implements the Pulltrace aggregator server.
 package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -19,21 +18,41 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Config holds server configuration.
+const (
+	maxReportBodyBytes = 1 << 20 // 1 MiB
+
+	rateLimitWindow = 500 * time.Millisecond
+
+	// maxRateLimitEntries prevents memory exhaustion from reports with arbitrary node names.
+	maxRateLimitEntries = 1024
+
+	// maxActivePulls prevents unbounded memory growth; new pulls are dropped at capacity.
+	maxActivePulls = 10000
+
+	// maxSSEClients prevents resource exhaustion from SSE connections.
+	maxSSEClients = 256
+
+	// stalePullTimeout force-completes pulls that stop sending updates.
+	stalePullTimeout = 10 * time.Minute
+
+	mergedPullSuffix = ":__merged__"
+)
+
 type Config struct {
 	HTTPAddr        string
 	MetricsAddr     string
 	LogLevel        string
 	WatchNamespaces []string
 	HistoryTTL      time.Duration
+	AgentToken      string // if non-empty, agents must present a matching Bearer token
 }
 
-// ConfigFromEnv loads server config from environment variables.
 func ConfigFromEnv() Config {
 	c := Config{
 		HTTPAddr:    envOrDefault("PULLTRACE_HTTP_ADDR", ":8080"),
 		MetricsAddr: envOrDefault("PULLTRACE_METRICS_ADDR", ":9090"),
 		LogLevel:    envOrDefault("PULLTRACE_LOG_LEVEL", "info"),
+		AgentToken:  os.Getenv("PULLTRACE_AGENT_TOKEN"),
 	}
 
 	if ns := os.Getenv("PULLTRACE_WATCH_NAMESPACES"); ns != "" {
@@ -59,19 +78,56 @@ func envOrDefault(key, defaultVal string) string {
 	return defaultVal
 }
 
-// Server is the Pulltrace aggregator.
-type Server struct {
-	config     Config
-	logger     *slog.Logger
-	podWatcher *k8s.PodWatcher
-	mu         sync.RWMutex
-	pulls      map[string]*model.PullStatus // keyed by "node:imageRef"
-	sseClients map[chan []byte]struct{}
-	sseMu      sync.Mutex
-	webFS      fs.FS
+type rateLimiter struct {
+	mu    sync.Mutex
+	nodes map[string]time.Time
 }
 
-// New creates a new server.
+func newRateLimiter() *rateLimiter {
+	return &rateLimiter{nodes: make(map[string]time.Time)}
+}
+
+func (rl *rateLimiter) allow(node string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	last, ok := rl.nodes[node]
+	if ok && now.Sub(last) < rateLimitWindow {
+		return false
+	}
+	if !ok && len(rl.nodes) >= maxRateLimitEntries {
+		return false
+	}
+	rl.nodes[node] = now
+	return true
+}
+
+func (rl *rateLimiter) cleanup() {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	cutoff := time.Now().Add(-1 * time.Minute)
+	for node, ts := range rl.nodes {
+		if ts.Before(cutoff) {
+			delete(rl.nodes, node)
+		}
+	}
+}
+
+type Server struct {
+	config      Config
+	logger      *slog.Logger
+	podWatcher  *k8s.PodWatcher
+	mu          sync.RWMutex
+	pulls       map[string]*model.PullStatus
+	rates       map[string]*model.RateCalculator
+	lastSeen    map[string]time.Time
+	sseClients  map[chan []byte]struct{}
+	sseMu       sync.Mutex
+	webFS       fs.FS
+	rateLimiter *rateLimiter
+}
+
 func New(cfg Config, webFS fs.FS) *Server {
 	level := slog.LevelInfo
 	switch cfg.LogLevel {
@@ -84,22 +140,42 @@ func New(cfg Config, webFS fs.FS) *Server {
 	}
 
 	return &Server{
-		config:     cfg,
-		logger:     slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})),
-		pulls:      make(map[string]*model.PullStatus),
-		sseClients: make(map[chan []byte]struct{}),
-		webFS:      webFS,
+		config:      cfg,
+		logger:      slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})),
+		pulls:       make(map[string]*model.PullStatus),
+		rates:       make(map[string]*model.RateCalculator),
+		lastSeen:    make(map[string]time.Time),
+		sseClients:  make(map[chan []byte]struct{}),
+		webFS:       webFS,
+		rateLimiter: newRateLimiter(),
 	}
 }
 
-// Run starts the server.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy",
+			"default-src 'self'; "+
+				"script-src 'self'; "+
+				"style-src 'self' https://fonts.googleapis.com; "+
+				"font-src 'self' https://fonts.gstatic.com; "+
+				"img-src 'self' data:; "+
+				"connect-src 'self'; "+
+				"frame-ancestors 'none'")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) Run(ctx context.Context) error {
 	s.logger.Info("starting pulltrace server",
 		"httpAddr", s.config.HTTPAddr,
 		"metricsAddr", s.config.MetricsAddr,
+		"tokenAuth", s.config.AgentToken != "",
 	)
 
-	// Start pod watcher
 	pw, err := k8s.NewPodWatcher(s.config.WatchNamespaces, s.logger)
 	if err != nil {
 		s.logger.Warn("pod watcher unavailable, running without pod correlation", "error", err)
@@ -112,10 +188,8 @@ func (s *Server) Run(ctx context.Context) error {
 		}()
 	}
 
-	// Start TTL cleanup
 	go s.cleanupLoop(ctx)
 
-	// HTTP API
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/report", s.handleReport)
 	mux.HandleFunc("/api/v1/pulls", s.handlePulls)
@@ -123,22 +197,31 @@ func (s *Server) Run(ctx context.Context) error {
 	mux.HandleFunc("/healthz", s.handleHealthz)
 	mux.HandleFunc("/readyz", s.handleReadyz)
 
-	// Serve embedded UI
 	if s.webFS != nil {
 		mux.Handle("/", http.FileServer(http.FS(s.webFS)))
 	}
 
 	httpServer := &http.Server{
-		Addr:    s.config.HTTPAddr,
-		Handler: mux,
+		Addr:              s.config.HTTPAddr,
+		Handler:           securityHeaders(mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		// WriteTimeout is 0 because SSE connections are long-lived.
+		// Slow-client protection comes from the 256-client cap and non-blocking channel sends.
+		IdleTimeout:    120 * time.Second,
+		MaxHeaderBytes: 1 << 16,
 	}
 
-	// Metrics server
+	// Metrics on a separate port — restrict access via NetworkPolicy.
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
 	metricsServer := &http.Server{
-		Addr:    s.config.MetricsAddr,
-		Handler: metricsMux,
+		Addr:              s.config.MetricsAddr,
+		Handler:           metricsMux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	errCh := make(chan error, 2)
@@ -149,8 +232,10 @@ func (s *Server) Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		httpServer.Shutdown(context.Background())
-		metricsServer.Shutdown(context.Background())
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		httpServer.Shutdown(shutdownCtx)   //nolint:errcheck
+		metricsServer.Shutdown(shutdownCtx) //nolint:errcheck
 		return nil
 	case err := <-errCh:
 		return err
@@ -163,47 +248,157 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.config.AgentToken != "" {
+		provided := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if subtle.ConstantTimeCompare([]byte(provided), []byte(s.config.AgentToken)) != 1 {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxReportBodyBytes)
+
 	var report model.AgentReport
 	if err := json.NewDecoder(r.Body).Decode(&report); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
-	metrics.AgentReports.WithLabelValues(report.NodeName).Inc()
+	if report.NodeName == "" || len(report.NodeName) > 253 {
+		http.Error(w, "invalid nodeName", http.StatusBadRequest)
+		return
+	}
 
+	if !s.rateLimiter.allow(report.NodeName) {
+		http.Error(w, "rate limited", http.StatusTooManyRequests)
+		return
+	}
+
+	metrics.AgentReports.Inc()
 	s.processReport(report)
-
 	w.WriteHeader(http.StatusOK)
+}
+
+// isContentDigest reports whether ref is a raw containerd content digest rather
+// than a human-readable image name. These refs are merged server-side into a
+// single logical pull keyed by "__pulling__" until the image name is resolved.
+func isContentDigest(ref string) bool {
+	for _, prefix := range []string{"sha256:", "layer-sha256:", "config-sha256:", "manifest-sha256:", "index-sha256:"} {
+		if strings.HasPrefix(ref, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// mergeDigestPulls consolidates raw content-digest entries from an agent report
+// into a single synthetic pull. Containerd tracks individual content objects
+// (manifest, config, layers) as separate ingests; grouping them here gives a
+// coherent per-image view before the image name is resolved from K8s events.
+func mergeDigestPulls(pulls []model.PullState) []model.PullState {
+	var normal []model.PullState
+	var digestLayers []model.LayerState
+	var earliestStart time.Time
+	allKnown := true
+
+	for _, pull := range pulls {
+		if isContentDigest(pull.ImageRef) {
+			digestLayers = append(digestLayers, pull.Layers...)
+			if earliestStart.IsZero() || pull.StartedAt.Before(earliestStart) {
+				earliestStart = pull.StartedAt
+			}
+			if !pull.TotalKnown {
+				allKnown = false
+			}
+		} else {
+			normal = append(normal, pull)
+		}
+	}
+
+	if len(digestLayers) == 0 {
+		return normal
+	}
+
+	merged := model.PullState{
+		ImageRef:   "__pulling__",
+		Layers:     digestLayers,
+		StartedAt:  earliestStart,
+		TotalKnown: allKnown,
+	}
+	return append(normal, merged)
 }
 
 func (s *Server) processReport(report model.AgentReport) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, pull := range report.Pulls {
+	now := time.Now()
+	mergedPulls := mergeDigestPulls(report.Pulls)
+	updatedKeys := make(map[string]bool)
+
+	for _, pull := range mergedPulls {
 		key := report.NodeName + ":" + pull.ImageRef
+		if pull.ImageRef == "__pulling__" {
+			key = report.NodeName + mergedPullSuffix
+		}
+		updatedKeys[key] = true
+
 		existing, ok := s.pulls[key]
-		if !ok {
+		if !ok || existing.CompletedAt != nil {
+			if !ok && len(s.pulls) >= maxActivePulls {
+				s.logger.Warn("pulls map at capacity, dropping new pull",
+					"node", report.NodeName,
+					"image", pull.ImageRef,
+					"limit", maxActivePulls,
+				)
+				continue
+			}
 			existing = &model.PullStatus{
-				ID:         key,
-				ImageRef:   pull.ImageRef,
-				StartedAt:  pull.StartedAt,
-				TotalKnown: pull.TotalKnown,
+				ID:        key,
+				NodeName:  report.NodeName,
+				ImageRef:  pull.ImageRef,
+				StartedAt: pull.StartedAt,
 			}
 			s.pulls[key] = existing
 			metrics.PullsTotal.Inc()
 			metrics.PullsActive.Inc()
 		}
 
-		// Aggregate layer data
+		if strings.HasSuffix(key, mergedPullSuffix) && existing.ImageRef == "__pulling__" && s.podWatcher != nil {
+			if images := s.podWatcher.GetPullingImagesForNode(report.NodeName); len(images) > 0 {
+				existing.ImageRef = images[0]
+			} else if images := s.podWatcher.GetWaitingImagesForNode(report.NodeName); len(images) > 0 {
+				existing.ImageRef = images[0]
+			}
+		}
+
+		s.lastSeen[key] = now
+
 		var totalBytes, downloadedBytes int64
 		layersDone := 0
+		layerStatuses := make([]model.LayerStatus, 0, len(pull.Layers))
+
 		for _, layer := range pull.Layers {
 			totalBytes += layer.TotalBytes
 			downloadedBytes += layer.DownloadedBytes
-			if layer.TotalKnown && layer.DownloadedBytes >= layer.TotalBytes {
-				layersDone++
+
+			ls := model.LayerStatus{
+				PullID:          key,
+				Digest:          layer.Digest,
+				TotalBytes:      layer.TotalBytes,
+				DownloadedBytes: layer.DownloadedBytes,
+				TotalKnown:      layer.TotalKnown,
 			}
+			if layer.TotalKnown && layer.TotalBytes > 0 {
+				ls.Percent = float64(layer.DownloadedBytes) / float64(layer.TotalBytes) * 100
+			}
+			if layer.TotalKnown && layer.DownloadedBytes >= layer.TotalBytes {
+				ls.Percent = 100
+				layersDone++
+				completedAt := now
+				ls.CompletedAt = &completedAt
+			}
+			layerStatuses = append(layerStatuses, ls)
 		}
 
 		existing.TotalBytes = totalBytes
@@ -211,17 +406,27 @@ func (s *Server) processReport(report model.AgentReport) {
 		existing.LayerCount = len(pull.Layers)
 		existing.LayersDone = layersDone
 		existing.TotalKnown = pull.TotalKnown
+		existing.Layers = layerStatuses
 
 		if totalBytes > 0 {
 			existing.Percent = float64(downloadedBytes) / float64(totalBytes) * 100
 		}
 
-		// Add pod correlation
-		if s.podWatcher != nil {
-			existing.Pods = s.podWatcher.GetPodsForImage(report.NodeName, pull.ImageRef)
+		rc, ok := s.rates[key]
+		if !ok {
+			rc = model.NewRateCalculator(10 * time.Second)
+			s.rates[key] = rc
+		}
+		rc.Add(downloadedBytes)
+		existing.BytesPerSec = rc.Rate()
+		if existing.TotalKnown && existing.TotalBytes > existing.DownloadedBytes {
+			existing.ETASeconds = rc.ETA(existing.TotalBytes - existing.DownloadedBytes)
 		}
 
-		// Emit SSE event
+		if s.podWatcher != nil {
+			existing.Pods = s.podWatcher.GetPodsForImage(report.NodeName, existing.ImageRef)
+		}
+
 		event := model.PullEvent{
 			SchemaVersion: model.SchemaVersion,
 			Timestamp:     report.Timestamp,
@@ -229,45 +434,46 @@ func (s *Server) processReport(report model.AgentReport) {
 			NodeName:      report.NodeName,
 			Pull:          existing,
 		}
-
-		// Log as JSON
 		if data, err := json.Marshal(event); err == nil {
-			fmt.Println(string(data))
+			s.logger.Debug("pull.progress",
+				"node", report.NodeName,
+				"image", existing.ImageRef,
+				"percent", existing.Percent,
+			)
 			s.broadcastSSE(data)
 		}
 	}
 
-	// Check for completed pulls (pulls present in state but not in report)
+	// Pulls absent from the report have completed on the node.
+	nodePrefix := report.NodeName + ":"
 	for key, pull := range s.pulls {
-		if !strings.HasPrefix(key, report.NodeName+":") {
+		if !strings.HasPrefix(key, nodePrefix) {
 			continue
 		}
-		found := false
-		for _, rp := range report.Pulls {
-			if report.NodeName+":"+rp.ImageRef == key {
-				found = true
-				break
-			}
+		if updatedKeys[key] || pull.CompletedAt != nil {
+			continue
 		}
-		if !found && pull.CompletedAt == nil {
-			now := time.Now()
-			pull.CompletedAt = &now
-			pull.Percent = 100
-			metrics.PullsActive.Dec()
-			metrics.PullDurationSeconds.Observe(now.Sub(pull.StartedAt).Seconds())
-			metrics.PullBytesTotal.Add(float64(pull.TotalBytes))
 
-			event := model.PullEvent{
-				SchemaVersion: model.SchemaVersion,
-				Timestamp:     now,
-				Type:          model.EventPullCompleted,
-				NodeName:      report.NodeName,
-				Pull:          pull,
-			}
-			if data, err := json.Marshal(event); err == nil {
-				fmt.Println(string(data))
-				s.broadcastSSE(data)
-			}
+		pull.CompletedAt = &now
+		pull.Percent = 100
+		metrics.PullsActive.Dec()
+		metrics.PullDurationSeconds.Observe(now.Sub(pull.StartedAt).Seconds())
+		metrics.PullBytesTotal.Add(float64(pull.TotalBytes))
+
+		event := model.PullEvent{
+			SchemaVersion: model.SchemaVersion,
+			Timestamp:     now,
+			Type:          model.EventPullCompleted,
+			NodeName:      report.NodeName,
+			Pull:          pull,
+		}
+		if data, err := json.Marshal(event); err == nil {
+			s.logger.Info("pull.completed",
+				"node", report.NodeName,
+				"image", pull.ImageRef,
+				"duration", now.Sub(pull.StartedAt).String(),
+			)
+			s.broadcastSSE(data)
 		}
 	}
 }
@@ -286,7 +492,7 @@ func (s *Server) handlePulls(w http.ResponseWriter, r *http.Request) {
 	s.mu.RUnlock()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(model.APIResponse{Pulls: pulls})
+	json.NewEncoder(w).Encode(model.APIResponse{Pulls: pulls}) //nolint:errcheck
 }
 
 func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
@@ -296,13 +502,14 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
+	// Register client atomically to avoid TOCTOU between capacity check and insertion.
 	ch := make(chan []byte, 64)
 	s.sseMu.Lock()
+	if len(s.sseClients) >= maxSSEClients {
+		s.sseMu.Unlock()
+		http.Error(w, "too many connections", http.StatusServiceUnavailable)
+		return
+	}
 	s.sseClients[ch] = struct{}{}
 	s.sseMu.Unlock()
 	metrics.SSEClients.Inc()
@@ -314,17 +521,28 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 		metrics.SSEClients.Dec()
 	}()
 
-	// Send current state as initial data
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+
+	// SSE comment flushes headers through buffering proxies.
+	w.Write([]byte(": connected\n\n")) //nolint:errcheck
+
 	s.mu.RLock()
+	now := time.Now()
 	for _, p := range s.pulls {
 		event := model.PullEvent{
 			SchemaVersion: model.SchemaVersion,
-			Timestamp:     time.Now(),
+			Timestamp:     now,
 			Type:          model.EventPullProgress,
+			NodeName:      p.NodeName,
 			Pull:          p,
 		}
 		if data, err := json.Marshal(event); err == nil {
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			w.Write([]byte("data: ")) //nolint:errcheck
+			w.Write(data)             //nolint:errcheck
+			w.Write([]byte("\n\n"))   //nolint:errcheck
 		}
 	}
 	s.mu.RUnlock()
@@ -338,7 +556,9 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				return
 			}
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			w.Write([]byte("data: ")) //nolint:errcheck
+			w.Write(data)             //nolint:errcheck
+			w.Write([]byte("\n\n"))   //nolint:errcheck
 			flusher.Flush()
 		}
 	}
@@ -347,36 +567,35 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 func (s *Server) broadcastSSE(data []byte) {
 	s.sseMu.Lock()
 	defer s.sseMu.Unlock()
-
 	for ch := range s.sseClients {
 		select {
 		case ch <- data:
 		default:
-			// Drop if client is slow
+			// Drop if client is slow.
 		}
 	}
 }
 
 func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	w.Write([]byte("ok")) //nolint:errcheck
 }
 
 func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	w.Write([]byte("ok")) //nolint:errcheck
 }
 
 func (s *Server) cleanupLoop(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			s.cleanup()
+			s.rateLimiter.cleanup()
 		}
 	}
 }
@@ -385,10 +604,23 @@ func (s *Server) cleanup() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	cutoff := time.Now().Add(-s.config.HistoryTTL)
+	now := time.Now()
+	ttlCutoff := now.Add(-s.config.HistoryTTL)
+
 	for key, pull := range s.pulls {
-		if pull.CompletedAt != nil && pull.CompletedAt.Before(cutoff) {
+		if pull.CompletedAt != nil && pull.CompletedAt.Before(ttlCutoff) {
 			delete(s.pulls, key)
+			delete(s.rates, key)
+			delete(s.lastSeen, key)
+			continue
+		}
+		if pull.CompletedAt == nil {
+			if lastSeen, ok := s.lastSeen[key]; ok && now.Sub(lastSeen) > stalePullTimeout {
+				completedAt := lastSeen
+				pull.CompletedAt = &completedAt
+				metrics.PullsActive.Dec()
+				s.logger.Warn("force-completing stale pull", "key", key, "lastSeen", lastSeen)
+			}
 		}
 	}
 }

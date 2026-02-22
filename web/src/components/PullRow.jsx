@@ -3,25 +3,40 @@ import ProgressBar from './ProgressBar';
 import LayerDetail from './LayerDetail';
 import { formatBytes, formatSpeed, formatEta, parseImageRef, getPullStatus } from '../utils';
 
-export default function PullRow({ pull, layers, expanded, onToggle }) {
+export default function PullRow({ pull, expanded, onToggle }) {
   const status = getPullStatus(pull);
   const img = parseImageRef(pull.imageRef);
+  const isResolving = pull.imageRef === '__pulling__';
 
   return (
     <>
       <tr className={expanded ? 'expanded' : ''} onClick={onToggle}>
         <td>
-          <span className={`expand-arrow ${expanded ? 'open' : ''}`}>&#9654;</span>
+          <span className={`expand-arrow ${expanded ? 'open' : ''}`}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
         </td>
         <td>
-          <div className="image-name">
-            {img.registry && <span className="image-registry">{img.registry}/</span>}
-            {img.name}
-            {img.tag && <span className="image-tag">{img.tag}</span>}
-          </div>
+          {isResolving ? (
+            <div className="image-name">
+              <span className="image-resolving">Resolving image&hellip;</span>
+            </div>
+          ) : (
+            <div className="image-name">
+              {img.registry && <span className="image-registry">{img.registry}/</span>}
+              <span className="image-repo">{img.name}</span>
+              {img.tag && <span className="image-tag">{img.tag}</span>}
+            </div>
+          )}
         </td>
         <td>
-          <span className="node-name">{pull.nodeName || '--'}</span>
+          {pull.nodeName ? (
+            <span className="node-name">{pull.nodeName}</span>
+          ) : (
+            <span className="eta">--</span>
+          )}
         </td>
         <td>
           <div className="progress-bar-container">
@@ -43,17 +58,17 @@ export default function PullRow({ pull, layers, expanded, onToggle }) {
           <span className="eta">{status === 'completed' ? '--' : formatEta(pull.etaSeconds)}</span>
         </td>
         <td>
-          <StatusBadge status={status} totalKnown={pull.totalKnown} />
+          <StatusBadge status={status} totalKnown={pull.totalKnown} isResolving={isResolving} />
         </td>
       </tr>
       {expanded && (
         <tr className="expand-row">
           <td colSpan={7}>
             <div className="expand-content">
-              <LayerDetail layers={layers} status={status} />
+              <LayerDetail layers={pull.layers || []} status={status} />
               {pull.pods && pull.pods.length > 0 && (
                 <div className="pods-section">
-                  <div className="pods-title">Correlated Pods</div>
+                  <div className="pods-title">Waiting Pods</div>
                   <div className="pod-list">
                     {pull.pods.map((pod, i) => (
                       <span className="pod-chip" key={i}>
@@ -72,9 +87,15 @@ export default function PullRow({ pull, layers, expanded, onToggle }) {
   );
 }
 
-function StatusBadge({ status, totalKnown }) {
-  if (status === 'error') return <span className="badge badge-error">Error</span>;
-  if (status === 'completed') return <span className="badge badge-completed">Done</span>;
-  if (!totalKnown) return <span className="badge badge-unknown">Unknown total</span>;
-  return <span className="badge badge-progress">Pulling</span>;
+function StatusBadge({ status, totalKnown, isResolving }) {
+  if (status === 'error') {
+    return <span className="badge badge-error"><span className="badge-dot" /> Error</span>;
+  }
+  if (status === 'completed') {
+    return <span className="badge badge-completed"><span className="badge-dot" /> Done</span>;
+  }
+  if (isResolving || !totalKnown) {
+    return <span className="badge badge-unknown"><span className="badge-dot" /> Resolving</span>;
+  }
+  return <span className="badge badge-progress"><span className="badge-dot" /> Pulling</span>;
 }

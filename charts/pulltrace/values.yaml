@@ -5,8 +5,28 @@ agent:
     repository: ghcr.io/d44b/pulltrace-agent
     tag: "0.1.0"
     pullPolicy: IfNotPresent
+  # -- Runtime socket configuration.
+  # Mounting the containerd socket grants the agent read access to all container
+  # metadata on the node. This is a privileged operation and must be explicitly
+  # opted into by setting both enabled=true AND risksAcknowledged=true.
+  runtimeSocket:
+    enabled: false
+    # -- You MUST set this to true to confirm you understand the security
+    # implications of mounting the containerd socket (node-level container
+    # metadata access, requires root UID for socket permissions).
+    risksAcknowledged: false
   containerd:
     socketPath: /run/containerd/containerd.sock
+  # -- Shared secret for agent-to-server authentication.
+  # When set, agents must present this token as a Bearer token and the server
+  # will reject unauthenticated reports. Strongly recommended for production.
+  auth:
+    # Inline token value. A Kubernetes Secret will be created automatically.
+    token: ""
+    # Reference an existing Secret instead of creating one.
+    # The secret must contain the token under `existingSecretKey`.
+    existingSecret: ""
+    existingSecretKey: "token"
   resources:
     limits:
       cpu: 200m
@@ -31,21 +51,41 @@ server:
       cpu: 100m
       memory: 128Mi
   service:
+    # -- Service type. Use ClusterIP (default) for internal-only access.
+    # Changing to LoadBalancer or NodePort exposes the unauthenticated API
+    # and requires server.service.exposureAcknowledged=true.
     type: ClusterIP
     port: 8080
     metricsPort: 9090
+    # -- Set to true if you intentionally use LoadBalancer or NodePort.
+    exposureAcknowledged: false
 
 config:
   logLevel: info
   watchNamespaces: ""
   historyTTL: 30m
-  reportInterval: 2s
+  reportInterval: 1s
 
 ingress:
+  # -- Ingress is disabled by default. Pulltrace exposes cluster inventory data
+  # (node names, pod names, image references) and has no built-in authentication.
+  # If you enable ingress, use an authenticating proxy (e.g., oauth2-proxy) or
+  # ingress-level auth annotations.
   enabled: false
   className: ""
   annotations: {}
   hosts: []
   tls: []
+
+# -- NetworkPolicy restricts who can reach the server.
+# Recommended for production deployments.
+networkPolicy:
+  enabled: false
+  # Namespaces allowed to reach the server HTTP port (UI + API).
+  allowedNamespaces: []
+  # Allow Prometheus to scrape the metrics port.
+  allowMetricsScrape: false
+  # Namespace where Prometheus runs (leave empty to allow any pod).
+  prometheusNamespace: ""
 
 namespace: pulltrace

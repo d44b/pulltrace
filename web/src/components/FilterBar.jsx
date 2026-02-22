@@ -27,7 +27,7 @@ export default function FilterBar({ filters, setFilter }) {
       <input
         className="filter-input"
         type="text"
-        placeholder="Filter by pod name..."
+        placeholder="Filter by pod..."
         value={filters.pod}
         onChange={(e) => setFilter('pod', e.target.value)}
       />

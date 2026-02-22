@@ -1,0 +1,51 @@
+{{- if .Values.networkPolicy.enabled }}
+# Restrict server ingress: only agents and the metrics scraper can reach the server.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "pulltrace.fullname" . }}-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulltrace.server.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "pulltrace.server.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow agent → server reports
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "pulltrace.agent.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: {{ .Values.server.service.port }}
+          protocol: TCP
+    # Allow UI and API access from approved sources
+    {{- if .Values.networkPolicy.allowedNamespaces }}
+    - from:
+        {{- range .Values.networkPolicy.allowedNamespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+        {{- end }}
+      ports:
+        - port: {{ .Values.server.service.port }}
+          protocol: TCP
+    {{- end }}
+    # Allow Prometheus scraping of the metrics port
+    {{- if .Values.networkPolicy.allowMetricsScrape }}
+    - from:
+        {{- if .Values.networkPolicy.prometheusNamespace }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.prometheusNamespace }}
+        {{- else }}
+        - podSelector: {}
+        {{- end }}
+      ports:
+        - port: {{ .Values.server.service.metricsPort }}
+          protocol: TCP
+    {{- end }}
+{{- end }}
