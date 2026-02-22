@@ -1,0 +1,45 @@
+# Binaries
+bin/
+dist/
+pulltrace-agent
+pulltrace-server
+
+# Go
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Node/UI
+web/node_modules/
+web/dist/*
+!web/dist/.gitkeep
+web/.vite/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.tar
+
+# Helm
+charts/pulltrace/charts/
+*.tgz
+
+# Environment
+.env
+.env.local

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pulltrace.fullname" . }}-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulltrace.server.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.server.replicas }}
+  selector:
+    matchLabels:
+      {{- include "pulltrace.server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pulltrace.server.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "pulltrace.server.serviceAccountName" . }}
+      containers:
+        - name: pulltrace-server
+          image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+          imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: PULLTRACE_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "pulltrace.fullname" . }}-config
+                  key: logLevel
+            - name: PULLTRACE_WATCH_NAMESPACES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "pulltrace.fullname" . }}-config
+                  key: watchNamespaces
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}

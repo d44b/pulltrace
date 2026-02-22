@@ -1,0 +1,17 @@
+Pulltrace has been installed.
+
+Components:
+  - Agent DaemonSet: monitoring containerd on every node
+  - Server Deployment: aggregating pull data and serving UI
+
+To access the Pulltrace UI:
+
+1. Port-forward the server service:
+   kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "pulltrace.fullname" . }}-server {{ .Values.server.service.port }}:{{ .Values.server.service.port }}
+
+2. Open http://localhost:{{ .Values.server.service.port }} in your browser.
+
+To check the status of all components:
+  kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Metrics are available on port {{ .Values.server.service.metricsPort }} at /metrics.

@@ -1,0 +1,49 @@
+agent:
+  image:
+    repository: ghcr.io/d44b/pulltrace-agent
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  containerd:
+    socketPath: /run/containerd/containerd.sock
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  tolerations: []
+  nodeSelector: {}
+
+server:
+  image:
+    repository: ghcr.io/d44b/pulltrace-server
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8080
+    metricsPort: 9090
+
+config:
+  logLevel: info
+  watchNamespaces: ""
+  historyTTL: 30m
+  reportInterval: 2s
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+namespace: pulltrace

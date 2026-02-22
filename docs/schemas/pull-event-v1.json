@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/d44b/pulltrace/docs/schemas/pull-event-v1.json",
+  "title": "PullEvent",
+  "description": "A Pulltrace event representing image pull progress.",
+  "type": "object",
+  "required": ["schemaVersion", "timestamp", "type", "nodeName"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "v1"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "pull.started",
+        "pull.progress",
+        "pull.completed",
+        "pull.failed",
+        "layer.started",
+        "layer.progress",
+        "layer.completed"
+      ]
+    },
+    "nodeName": {
+      "type": "string"
+    },
+    "pull": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "imageRef": { "type": "string" },
+        "totalBytes": { "type": "integer" },
+        "downloadedBytes": { "type": "integer" },
+        "bytesPerSec": { "type": "number" },
+        "etaSeconds": { "type": "number" },
+        "percent": { "type": "number" },
+        "layerCount": { "type": "integer" },
+        "layersDone": { "type": "integer" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" },
+        "error": { "type": "string" },
+        "pods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "namespace": { "type": "string" },
+              "podName": { "type": "string" },
+              "container": { "type": "string" }
+            }
+          }
+        },
+        "totalKnown": { "type": "boolean" }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "properties": {
+        "pullId": { "type": "string" },
+        "digest": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "totalBytes": { "type": "integer" },
+        "downloadedBytes": { "type": "integer" },
+        "bytesPerSec": { "type": "number" },
+        "percent": { "type": "number" },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" },
+        "totalKnown": { "type": "boolean" }
+      }
+    }
+  }
+}

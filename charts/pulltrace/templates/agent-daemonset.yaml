@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "pulltrace.fullname" . }}-agent
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulltrace.agent.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "pulltrace.agent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pulltrace.agent.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "pulltrace.agent.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        supplementalGroups:
+          - 0
+      containers:
+        - name: pulltrace-agent
+          image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"
+          imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+          env:
+            - name: PULLTRACE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PULLTRACE_SERVER_URL
+              value: "http://{{ include "pulltrace.fullname" . }}-server.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.server.service.port }}"
+            - name: PULLTRACE_CONTAINERD_SOCKET
+              value: {{ .Values.agent.containerd.socketPath | quote }}
+            - name: PULLTRACE_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "pulltrace.fullname" . }}-config
+                  key: logLevel
+          volumeMounts:
+            - name: containerd-socket
+              mountPath: /run/containerd/containerd.sock
+              readOnly: true
+          resources:
+            {{- toYaml .Values.agent.resources | nindent 12 }}
+      volumes:
+        - name: containerd-socket
+          hostPath:
+            path: {{ .Values.agent.containerd.socketPath }}
+            type: Socket
+      {{- with .Values.agent.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
