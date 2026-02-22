@@ -1,3 +1,5 @@
+imagePullSecrets: []
+
 agent:
   image:
     repository: ghcr.io/d44b/pulltrace-agent

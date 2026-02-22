@@ -15,12 +15,15 @@ spec:
         {{- include "pulltrace.agent.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "pulltrace.agent.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Agent needs root group access for containerd socket on Talos
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        supplementalGroups:
-          - 0
+        runAsNonRoot: false
+        runAsUser: 0
+        runAsGroup: 0
       containers:
         - name: pulltrace-agent
           image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"

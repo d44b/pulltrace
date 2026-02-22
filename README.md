@@ -56,8 +56,13 @@ Or install from source:
 ```bash
 git clone https://github.com/d44b/pulltrace.git
 cd pulltrace
-helm install pulltrace ./charts/pulltrace -n pulltrace --create-namespace
+kubectl create namespace pulltrace
+# Agent requires hostPath for containerd socket - set PodSecurity to privileged:
+kubectl label namespace pulltrace pod-security.kubernetes.io/enforce=privileged --overwrite
+helm install pulltrace ./charts/pulltrace -n pulltrace
 ```
+
+> **Note:** The agent DaemonSet needs `hostPath` access to the containerd socket. If your cluster enforces PodSecurity standards (baseline or restricted), you must set the `pulltrace` namespace to `privileged` enforcement, otherwise agent pods will be rejected. This is the only required cluster-level change.
 
 Access the UI:
 

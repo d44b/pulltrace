@@ -56,7 +56,10 @@ The server runs as a non-root user. Its RBAC is limited to read-only pod access 
 1. **Read-only operations.** The agent only calls `content.ListStatuses` and `content.Info` on the containerd API. It does not create containers, modify images, or perform any write operations.
 2. **Non-root user.** The agent container runs as a non-root UID. The containerd socket permissions must allow this user to connect (typically group `root` or a dedicated `containerd` group).
 3. **No privilege escalation.** The agent pod spec sets `allowPrivilegeEscalation: false`.
-4. **Security context constraints.** On OpenShift or clusters with PodSecurityAdmission, the agent requires only the `baseline` profile, not `privileged`, with the exception of the host path volume mount.
+4. **PodSecurity Standards.** On clusters with PodSecurity admission, the `pulltrace` namespace must be labeled with `pod-security.kubernetes.io/enforce=privileged` because the agent uses a `hostPath` volume for the containerd socket. This is a namespace-level setting and does not affect other namespaces.
+   ```
+   kubectl label namespace pulltrace pod-security.kubernetes.io/enforce=privileged --overwrite
+   ```
 
 **Recommendation:** Review your cluster's security policies before deploying. If your threat model does not allow host path mounts to the containerd socket, Pulltrace cannot be used.
 
