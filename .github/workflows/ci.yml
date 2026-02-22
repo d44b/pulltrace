@@ -28,6 +28,9 @@ jobs:
           go-version: "1.22"
           cache: true
 
+      - name: Stub web/dist for vet
+        run: mkdir -p web/dist && touch web/dist/.keep
+
       - name: Vet
         run: go vet ./...
 
