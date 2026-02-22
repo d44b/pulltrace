@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -353,8 +354,11 @@ func (s *Server) processReport(report model.AgentReport) {
 				)
 				continue
 			}
+			// Use a unique ID per pull so the frontend creates a fresh row
+			// instead of reusing the previous completed entry (same slot key).
+			uid := fmt.Sprintf("%s@%d", key, now.UnixNano())
 			existing = &model.PullStatus{
-				ID:        key,
+				ID:        uid,
 				NodeName:  report.NodeName,
 				ImageRef:  pull.ImageRef,
 				StartedAt: pull.StartedAt,

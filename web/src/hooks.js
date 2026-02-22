@@ -36,7 +36,7 @@ export function usePulls() {
             }
             setPulls((prev) => {
               const idx = prev.findIndex((p) => p.id === pull.id);
-              if (idx === -1) return [...prev, pull];
+              if (idx === -1) return [pull, ...prev];
               const next = [...prev];
               next[idx] = pull;
               return next;

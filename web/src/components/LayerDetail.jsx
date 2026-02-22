@@ -3,7 +3,7 @@ import { formatBytes, formatSpeed } from '../utils';
 
 export default function LayerDetail({ layers }) {
   if (!layers || layers.length === 0) {
-    return <p style={{ color: 'var(--t-muted)', fontSize: 12, fontFamily: 'var(--mono)' }}>No layer data yet</p>;
+    return <p style={{ color: 'var(--text-3)', fontSize: 12, fontFamily: 'var(--mono)' }}>No layer data yet</p>;
   }
 
   return (
@@ -31,7 +31,7 @@ export default function LayerDetail({ layers }) {
               <span className="layer-bytes">
                 {formatBytes(layer.downloadedBytes)} / {layer.totalKnown ? formatBytes(layer.totalBytes) : '?'}
               </span>
-              {speed && <span className="layer-speed">{speed}</span>}
+              {speed && <span className="layer-speed-text">{speed}</span>}
             </div>
           );
         })}
