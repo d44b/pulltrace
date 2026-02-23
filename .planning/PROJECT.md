@@ -8,6 +8,16 @@ Pulltrace is a real-time Kubernetes image pull monitor. A DaemonSet agent on eac
 
 A DevOps engineer deploying to Kubernetes can see exactly which images are pulling, how fast, which pods are waiting, and when they'll be ready — without kubectl exec or log digging.
 
+## Current Milestone: v0.2 Housekeeping
+
+**Goal:** Clean up post-launch debt, fix CI for future releases, and fully validate pulltrace on a live cluster.
+
+**Target features:**
+- Fix CONTRIBUTING.md dead link (line 147 — CODE_OF_CONDUCT.md reference)
+- Social preview image uploaded to GitHub repository Settings (manual)
+- CI: `--merge` flag added to helm repo index for v0.2.0+
+- Deploy and fully validate on d4b cluster (UI, Prometheus, pod correlation, layer drill-down)
+
 ## Current State (v0.1.0)
 
 **Shipped:** 2026-02-23
@@ -59,13 +69,17 @@ A DevOps engineer deploying to Kubernetes can see exactly which images are pulli
 
 ### Active
 
-<!-- v0.2.0 candidates — not yet started -->
+<!-- v0.2.0 scope -->
 
-- [ ] Artifact Hub listing (`artifacthub-repo.yml`) for Helm chart discoverability
-- [ ] Docker image SBOMs and cosign signatures attached to GitHub Release
-- [ ] Layer-level SSE events emitted (`layer.started`, `layer.progress`, `layer.completed`)
-- [ ] Social preview image uploaded to GitHub repository Settings (no API; manual)
 - [ ] Fix CONTRIBUTING.md dead link (line 147 references removed CODE_OF_CONDUCT.md)
+- [ ] Social preview image uploaded to GitHub repository Settings (no API; manual)
+- [ ] CI: `--merge` flag added to helm repo index for v0.2.0+
+- [ ] Deploy pulltrace to d4b cluster with full validation (UI, Prometheus metrics, pod correlation, layer drill-down)
+
+<!-- v0.3+ candidates — deferred -->
+<!-- - Artifact Hub listing (`artifacthub-repo.yml`) for Helm chart discoverability -->
+<!-- - Docker image SBOMs and cosign signatures attached to GitHub Release -->
+<!-- - Layer-level SSE events emitted (`layer.started`, `layer.progress`, `layer.completed`) -->
 
 ### Out of Scope
 
@@ -101,7 +115,7 @@ A DevOps engineer deploying to Kubernetes can see exactly which images are pulli
 | `cancel-in-progress: false` on deploy-gh-pages concurrency | Never abort an in-flight gh-pages push (leaves branch in broken state) | ✓ Good |
 | `needs: [helm-release]` for github-release job | Release appears only after Helm index is live on gh-pages | ✓ Good |
 | v0.1.0 as first public release | Feature-complete core; stabilize and document before adding features | ✓ Good — shipped |
-| No `--merge` for v0.1.0 helm repo index | No prior index.yaml; use `--merge` for v0.2.0+ to preserve prior chart versions | — Pending: must remember for v0.2.0 |
+| No `--merge` for v0.1.0 helm repo index | No prior index.yaml; use `--merge` for v0.2.0+ to preserve prior chart versions | — Pending: fixing in v0.2 |
 
 ---
-*Last updated: 2026-02-23 after v0.1 milestone*
+*Last updated: 2026-02-23 after v0.2 milestone start*

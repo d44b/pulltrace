@@ -9,9 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-23 after v0.1 milestone)
 
 ## Current Position
 
-Phase: v0.1.0 COMPLETE — milestone archived
-Status: v0.1.0 live at https://github.com/d44b/pulltrace — all artifacts public, docs deployed, GitHub Release created
-Last activity: 2026-02-23 — v0.1 milestone completed and archived to .planning/milestones/
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-23 — Milestone v0.2 Housekeeping started
 
 ## Performance Metrics
 
