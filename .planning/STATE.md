@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 1 of 4 (Foundation Files)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-02-23 — Roadmap created
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-23 — Completed 01-02 (PullErrors metric + layer BytesPerSec/MediaType)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 1
+- Average duration: 8min
+- Total execution time: 8min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-foundation-files | 1 | 8min | 8min |
 
 **Recent Trend:**
-- Last 5 plans: none yet
+- Last 5 plans: 01-02 (8min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -46,6 +46,8 @@ Recent decisions affecting current work:
 - peaceiris/actions-gh-pages with keep_files: true is the only safe co-deployment pattern for docs + Helm index on same gh-pages branch
 - helm/chart-releaser-action NOT used (creates duplicate releases, forces index.yaml to gh-pages root)
 - softprops/action-gh-release@v2 for GitHub Release creation (chart-releaser-action replacement)
+- PullErrors.Inc() placed in processReport() completion path only (not cleanup()) — agent is authoritative error source, cleanup is a timeout safety net
+- Layer rate keys use key+":layer:"+digest compound format enabling HasPrefix bulk-delete on pull eviction
 
 ### Pending Todos
 
@@ -60,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Roadmap created, STATE.md initialized — ready to begin Phase 1 planning
+Stopped at: Completed 01-02-PLAN.md — PullErrors metric wired, layer BytesPerSec/MediaType populated
 Resume file: None
