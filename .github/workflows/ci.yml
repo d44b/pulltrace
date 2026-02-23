@@ -183,10 +183,17 @@ jobs:
           mkdir -p /tmp/helm-pages
           cp /tmp/charts/pulltrace-${{ steps.version.outputs.version }}.tgz /tmp/helm-pages/
 
+      - name: Fetch existing Helm repo index
+        run: |
+          curl -fsSL https://d44b.github.io/pulltrace/charts/index.yaml \
+            -o /tmp/helm-pages/index.yaml \
+            || true
+
       - name: Generate Helm repo index
         run: |
           helm repo index /tmp/helm-pages \
-            --url https://d44b.github.io/pulltrace/charts
+            --url https://d44b.github.io/pulltrace/charts \
+            --merge /tmp/helm-pages/index.yaml
 
       - name: Deploy charts to gh-pages
         uses: peaceiris/actions-gh-pages@v4
