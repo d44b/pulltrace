@@ -2,19 +2,16 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-23)
+See: .planning/PROJECT.md (updated 2026-02-23 after v0.1 milestone)
 
-**Core value:** A DevOps engineer can install Pulltrace with a single `helm install` command, find docs explaining how it works, and trust it as a credible open source project.
-**Current focus:** Phase 4 - Launch
+**Core value:** A DevOps engineer deploying to Kubernetes can see exactly which images are pulling, how fast, which pods are waiting, and when they'll be ready — without kubectl exec or log digging.
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 4 of 4 (Launch)
-Plan: 2 of 2 completed in current phase
-Status: PHASE 4 COMPLETE — v0.1.0 tag pushed, CI all 7 jobs green, all artifacts live and publicly reachable
-Last activity: 2026-02-23 — v0.1.0 artifacts verified: Docker images pull unauthenticated, GitHub Release with .tgz, Helm classic repo and OCI chart reachable, docs site intact
-
-Progress: [██████████] 100% (Phase 4 plan 2/2 complete — ALL PHASES DONE)
+Phase: v0.1.0 COMPLETE — milestone archived
+Status: v0.1.0 live at https://github.com/d44b/pulltrace — all artifacts public, docs deployed, GitHub Release created
+Last activity: 2026-02-23 — v0.1 milestone completed and archived to .planning/milestones/
 
 ## Performance Metrics
 
@@ -71,14 +68,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Upload social preview image to GitHub repo Settings (manual, no API)
+- Fix CONTRIBUTING.md dead link to CODE_OF_CONDUCT.md (line 147)
+- Add `--merge` flag to helm repo index for v0.2.0+ releases
 
 ### Blockers/Concerns
 
-None — GHCR packages blocker resolved (all three packages set to public in Plan 04-01).
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 04-02-PLAN.md — v0.1.0 artifacts live, all phases done, project announcement-ready
+Stopped at: Completed v0.1 milestone archival
 Resume file: None

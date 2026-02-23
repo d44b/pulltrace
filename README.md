@@ -47,7 +47,7 @@ Pulltrace connects to the containerd runtime on each node to track layer-by-laye
 ## Quick Start
 
 ```bash
-helm repo add pulltrace https://d44b.github.io/pulltrace
+helm repo add pulltrace https://d44b.github.io/pulltrace/charts
 helm install pulltrace pulltrace/pulltrace -n pulltrace --create-namespace
 ```
 
