@@ -16,14 +16,30 @@ spec:
         {{- include "pulltrace.server.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "pulltrace.server.serviceAccountName" . }}
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: pulltrace-server
           image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
           imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - name: http
               containerPort: 8080
@@ -42,6 +58,13 @@ spec:
                 configMapKeyRef:
                   name: {{ include "pulltrace.fullname" . }}-config
                   key: watchNamespaces
+            {{- if or .Values.agent.auth.token .Values.agent.auth.existingSecret }}
+            - name: PULLTRACE_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (printf "%s-agent-token" (include "pulltrace.fullname" .)) .Values.agent.auth.existingSecret }}
+                  key: {{ default "token" .Values.agent.auth.existingSecretKey }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz

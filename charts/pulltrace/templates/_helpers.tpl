@@ -85,3 +85,24 @@ Server service account name
 {{- define "pulltrace.server.serviceAccountName" -}}
 {{ include "pulltrace.fullname" . }}-server
 {{- end }}
+
+{{/*
+Validate runtime socket configuration.
+Fails helm install/upgrade if runtimeSocket.enabled=true but risksAcknowledged!=true.
+*/}}
+{{- define "pulltrace.validateRuntimeSocket" -}}
+{{- if and .Values.agent.runtimeSocket.enabled (not .Values.agent.runtimeSocket.risksAcknowledged) -}}
+{{- fail "\n\nSECURITY ERROR: agent.runtimeSocket.enabled=true requires agent.runtimeSocket.risksAcknowledged=true.\n\nMounting the containerd socket grants the agent read access to all container\nmetadata on the node. Set agent.runtimeSocket.risksAcknowledged=true to confirm\nyou understand the risks.\n\nSee SECURITY.md for the full threat model.\n" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate service type.
+Warns if service type is not ClusterIP — LoadBalancer/NodePort expose the
+unauthenticated API to the network.
+*/}}
+{{- define "pulltrace.validateServiceType" -}}
+{{- if and (ne .Values.server.service.type "ClusterIP") (not .Values.server.service.exposureAcknowledged) -}}
+{{- fail (printf "\n\nSECURITY ERROR: server.service.type=%s exposes the Pulltrace API without authentication.\n\nPulltrace has no built-in auth. Anyone with network access can read cluster\ninventory data (node names, pod names, image references).\n\nIf this is intentional, set server.service.exposureAcknowledged=true.\nOtherwise, keep the default ClusterIP and use ingress with an auth proxy.\n" .Values.server.service.type) -}}
+{{- end -}}
+{{- end -}}

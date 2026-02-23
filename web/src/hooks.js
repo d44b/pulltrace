@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 export function usePulls() {
   const [pulls, setPulls] = useState([]);
-  const [layers, setLayers] = useState({});
   const [connected, setConnected] = useState(false);
   const eventSourceRef = useRef(null);
 
@@ -11,7 +10,9 @@ export function usePulls() {
     fetch('/api/v1/pulls')
       .then((res) => res.json())
       .then((data) => {
-        if (data.pulls) setPulls(data.pulls);
+        if (data.pulls) {
+          setPulls(data.pulls);
+        }
       })
       .catch(() => {});
   }, []);
@@ -28,22 +29,18 @@ export function usePulls() {
         try {
           const evt = JSON.parse(event.data);
           if (evt.pull) {
+            const pull = { ...evt.pull };
+            // Prefer top-level nodeName (always set since the fix), fall back to pull.nodeName
+            if (evt.nodeName && !pull.nodeName) {
+              pull.nodeName = evt.nodeName;
+            }
             setPulls((prev) => {
-              const idx = prev.findIndex((p) => p.id === evt.pull.id);
-              if (idx === -1) return [...prev, evt.pull];
+              const idx = prev.findIndex((p) => p.id === pull.id);
+              if (idx === -1) return [pull, ...prev];
               const next = [...prev];
-              next[idx] = evt.pull;
+              next[idx] = pull;
               return next;
             });
-          }
-          if (evt.layer) {
-            setLayers((prev) => ({
-              ...prev,
-              [evt.layer.pullId]: {
-                ...(prev[evt.layer.pullId] || {}),
-                [evt.layer.digest]: evt.layer,
-              },
-            }));
           }
         } catch {
           // ignore parse errors
@@ -64,7 +61,7 @@ export function usePulls() {
     };
   }, []);
 
-  return { pulls, layers, connected };
+  return { pulls, connected };
 }
 
 export function useFilters() {

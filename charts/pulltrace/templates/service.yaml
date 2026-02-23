@@ -1,3 +1,4 @@
+{{- include "pulltrace.validateServiceType" . -}}
 apiVersion: v1
 kind: Service
 metadata:

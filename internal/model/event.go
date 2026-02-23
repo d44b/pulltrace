@@ -1,36 +1,29 @@
-// Package model defines the core data types for Pulltrace.
 package model
 
 import "time"
 
 const SchemaVersion = "v1"
 
-// PullEvent is the top-level event emitted as a JSON log line and sent over the API.
+// PullEvent is the top-level event sent over SSE and emitted as a structured log line.
 type PullEvent struct {
-	SchemaVersion string       `json:"schemaVersion"`
-	Timestamp     time.Time    `json:"timestamp"`
-	Type          EventType    `json:"type"`
-	NodeName      string       `json:"nodeName"`
-	Pull          *PullStatus  `json:"pull,omitempty"`
-	Layer         *LayerStatus `json:"layer,omitempty"`
+	SchemaVersion string      `json:"schemaVersion"`
+	Timestamp     time.Time   `json:"timestamp"`
+	Type          EventType   `json:"type"`
+	NodeName      string      `json:"nodeName"`
+	Pull          *PullStatus `json:"pull,omitempty"`
 }
 
-// EventType distinguishes event kinds.
 type EventType string
 
 const (
-	EventPullStarted    EventType = "pull.started"
-	EventPullProgress   EventType = "pull.progress"
-	EventPullCompleted  EventType = "pull.completed"
-	EventPullFailed     EventType = "pull.failed"
-	EventLayerStarted   EventType = "layer.started"
-	EventLayerProgress  EventType = "layer.progress"
-	EventLayerCompleted EventType = "layer.completed"
+	EventPullProgress  EventType = "pull.progress"
+	EventPullCompleted EventType = "pull.completed"
 )
 
-// PullStatus describes the overall image pull.
+// PullStatus describes the current state of an image pull.
 type PullStatus struct {
 	ID              string           `json:"id"`
+	NodeName        string           `json:"nodeName,omitempty"`
 	ImageRef        string           `json:"imageRef"`
 	TotalBytes      int64            `json:"totalBytes"`
 	DownloadedBytes int64            `json:"downloadedBytes"`
@@ -43,10 +36,11 @@ type PullStatus struct {
 	CompletedAt     *time.Time       `json:"completedAt,omitempty"`
 	Error           string           `json:"error,omitempty"`
 	Pods            []PodCorrelation `json:"pods,omitempty"`
+	Layers          []LayerStatus    `json:"layers,omitempty"`
 	TotalKnown      bool             `json:"totalKnown"`
 }
 
-// LayerStatus describes a single layer (content digest) download.
+// LayerStatus describes a single layer download.
 type LayerStatus struct {
 	PullID          string     `json:"pullId"`
 	Digest          string     `json:"digest"`
@@ -60,21 +54,22 @@ type LayerStatus struct {
 	TotalKnown      bool       `json:"totalKnown"`
 }
 
-// PodCorrelation maps an image pull to waiting pods.
+// PodCorrelation maps an image pull to a waiting pod.
 type PodCorrelation struct {
 	Namespace string `json:"namespace"`
 	PodName   string `json:"podName"`
 	Container string `json:"container"`
+	Image     string `json:"image,omitempty"`
 }
 
-// AgentReport is the payload an agent sends to the server.
+// AgentReport is the payload sent by an agent to the server.
 type AgentReport struct {
 	NodeName  string      `json:"nodeName"`
 	Timestamp time.Time   `json:"timestamp"`
 	Pulls     []PullState `json:"pulls"`
 }
 
-// PullState is the agent-side snapshot of a single image pull in progress.
+// PullState is the agent-side snapshot of a single image pull.
 type PullState struct {
 	ImageRef   string       `json:"imageRef"`
 	Layers     []LayerState `json:"layers"`
@@ -91,7 +86,7 @@ type LayerState struct {
 	TotalKnown      bool   `json:"totalKnown"`
 }
 
-// APIResponse wraps API list responses.
+// APIResponse wraps the pulls list endpoint response.
 type APIResponse struct {
 	Pulls []PullStatus `json:"pulls"`
 }

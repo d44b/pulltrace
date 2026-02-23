@@ -1,8 +1,8 @@
 # Binaries
 bin/
 dist/
-pulltrace-agent
-pulltrace-server
+/pulltrace-agent
+/pulltrace-server
 
 # Go
 vendor/

@@ -1,5 +1,3 @@
-// Package containerd provides integration with the containerd runtime
-// to monitor image pull progress via the content store.
 package containerd
 
 import (
@@ -15,13 +13,13 @@ import (
 	"github.com/containerd/containerd/v2/core/content"
 )
 
-// Watcher monitors containerd for active image pulls.
 type Watcher struct {
 	socketPath string
 	namespace  string
 	client     *containerd.Client
 	mu         sync.RWMutex
 	pulls      map[string]*pullTracker
+	closeOnce  sync.Once
 	stopCh     chan struct{}
 }
 
@@ -41,7 +39,6 @@ type layerTracker struct {
 	rate            *model.RateCalculator
 }
 
-// NewWatcher creates a new containerd watcher.
 func NewWatcher(socketPath, namespace string) *Watcher {
 	if namespace == "" {
 		namespace = "k8s.io"
@@ -54,7 +51,6 @@ func NewWatcher(socketPath, namespace string) *Watcher {
 	}
 }
 
-// Connect establishes connection to containerd.
 func (w *Watcher) Connect(ctx context.Context) error {
 	c, err := containerd.New(w.socketPath, containerd.WithDefaultNamespace(w.namespace))
 	if err != nil {
@@ -64,24 +60,23 @@ func (w *Watcher) Connect(ctx context.Context) error {
 	return nil
 }
 
-// Close shuts down the watcher.
 func (w *Watcher) Close() error {
-	close(w.stopCh)
-	if w.client != nil {
-		return w.client.Close()
-	}
-	return nil
+	var err error
+	w.closeOnce.Do(func() {
+		close(w.stopCh)
+		if w.client != nil {
+			err = w.client.Close()
+		}
+	})
+	return err
 }
 
-// Poll queries containerd for active ingests and returns current pull states.
 func (w *Watcher) Poll(ctx context.Context) ([]model.PullState, error) {
 	if w.client == nil {
 		return nil, fmt.Errorf("not connected")
 	}
 
 	store := w.client.ContentStore()
-
-	// List active ingests (layers being downloaded)
 	statuses, err := store.ListStatuses(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("listing content statuses: %w", err)
@@ -90,15 +85,12 @@ func (w *Watcher) Poll(ctx context.Context) ([]model.PullState, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	// Track which ingests are still active
 	activeRefs := make(map[string]bool)
-
 	for _, status := range statuses {
 		activeRefs[status.Ref] = true
 		w.updateLayerFromStatus(status)
 	}
 
-	// Mark completed layers
 	for _, pt := range w.pulls {
 		for ref, lt := range pt.layers {
 			if !activeRefs[ref] && lt.completedAt == nil {
@@ -111,7 +103,6 @@ func (w *Watcher) Poll(ctx context.Context) ([]model.PullState, error) {
 		}
 	}
 
-	// Build output
 	var states []model.PullState
 	for _, pt := range w.pulls {
 		ps := model.PullState{
@@ -134,9 +125,7 @@ func (w *Watcher) Poll(ctx context.Context) ([]model.PullState, error) {
 		states = append(states, ps)
 	}
 
-	// Clean up completed pulls (all layers done)
 	w.cleanCompleted()
-
 	return states, nil
 }
 
@@ -179,20 +168,17 @@ func (w *Watcher) cleanCompleted() {
 				break
 			}
 		}
+		// Keep the entry briefly so the server sees the completed state.
 		if allDone && time.Since(pt.startedAt) > 30*time.Second {
 			delete(w.pulls, key)
 		}
 	}
 }
 
-// extractImageRef tries to parse an image reference from a containerd ingest ref.
-// Containerd CRI ingest refs for image pulls typically follow patterns like:
-// "content-<hash>-<digest>" or "<image>@<digest>"
-// This is best-effort; the server correlates with K8s pod events for accuracy.
+// extractImageRef groups containerd ingest refs by image. Ingest refs for K8s
+// image pulls typically follow "<image>@<digest>" or bare digest patterns.
+// This is best-effort; the server correlates with K8s events for accuracy.
 func extractImageRef(ref string) string {
-	// Containerd ingest refs for K8s image pulls often look like:
-	// "sha256:<hex>" or contain the image reference
-	// Group layers by the prefix before any sha256 digest
 	parts := strings.SplitN(ref, "@", 2)
 	if len(parts) == 2 {
 		return parts[0]

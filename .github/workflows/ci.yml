@@ -2,71 +2,167 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["main", "feature/**", "fix/**"]
+    tags: ["v*.*.*"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ── Lint & Test ────────────────────────────────────────────────────────────
   lint-test:
+    name: Lint & Test (Go)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
+          cache: true
+
+      - name: Stub web/dist for vet
+        run: mkdir -p web/dist && touch web/dist/.keep
+
       - name: Vet
         run: go vet ./...
-      - name: Test
-        run: go test ./... -v -race
 
+      - name: Test
+        run: go test ./... -v -race -coverprofile=coverage.out
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+
+  # ── Build UI ───────────────────────────────────────────────────────────────
   build-ui:
+    name: Build UI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - name: Install and build UI
-        working-directory: web
-        run: |
-          npm ci
-          npm run build
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
 
-  docker:
-    needs: [lint-test, build-ui]
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build
+        working-directory: web
+        run: npm run build
+
+  # ── Helm Lint ──────────────────────────────────────────────────────────────
+  helm-lint:
+    name: Helm Lint
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Lint
+        run: helm lint charts/pulltrace
+
+  # ── Docker Build & Push ────────────────────────────────────────────────────
+  docker:
+    name: Docker (${{ matrix.component }})
+    needs: [lint-test, build-ui, helm-lint]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [agent, server]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/pulltrace-${{ matrix.component }}
+          tags: |
+            # On a semver tag (v1.2.3) → 1.2.3, 1.2, 1, latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # On main branch → edge
+            type=raw,value=edge,enable={{is_default_branch}}
+            # On any branch → branch name (slashes replaced with -)
+            type=ref,event=branch
+            # On PRs → pr-<number>
+            type=ref,event=pr
+            # Always → short git SHA
+            type=sha,prefix=sha-,format=short
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push agent
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.agent
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/pulltrace-agent:${{ github.sha }},ghcr.io/${{ github.repository_owner }}/pulltrace-agent:latest
-      - name: Build and push server
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.server
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/pulltrace-server:${{ github.sha }},ghcr.io/${{ github.repository_owner }}/pulltrace-server:latest
 
-  helm-lint:
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.component }}
+          platforms: linux/amd64,linux/arm64
+          # Push only on non-PR events
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+
+  # ── Helm Chart Release ─────────────────────────────────────────────────────
+  helm-release:
+    name: Helm Chart Release
+    needs: [docker]
     runs-on: ubuntu-latest
+    # Only on semver tags
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
+
       - uses: azure/setup-helm@v4
-      - name: Helm lint
-        run: helm lint charts/pulltrace
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update chart versions
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          sed -i "s/^version:.*/version: ${VERSION}/" charts/pulltrace/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/pulltrace/Chart.yaml
+
+      - name: Package chart
+        run: helm package charts/pulltrace --destination /tmp/charts
+
+      - name: Login to GHCR (OCI)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push chart to GHCR OCI
+        run: |
+          helm push /tmp/charts/pulltrace-${{ steps.version.outputs.version }}.tgz \
+            oci://ghcr.io/${{ github.repository_owner }}/charts

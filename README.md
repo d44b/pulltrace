@@ -38,7 +38,7 @@ Pulltrace connects to the containerd runtime on each node to track layer-by-laye
 
 **Data flow:**
 
-1. **Agent** reads containerd content store ingests on each node and snapshots active pulls every 2 seconds (configurable).
+1. **Agent** reads containerd content store ingests on each node and snapshots active pulls every 1 second (configurable).
 2. **Agent** POSTs `AgentReport` JSON to the server at `/api/v1/report`.
 3. **Server** merges reports from all agents, enriches with pod correlation from the Kubernetes API, and computes rates/ETAs.
 4. **Server** emits `PullEvent` JSON via SSE at `/api/v1/events` and exposes pulls at `/api/v1/pulls`.
@@ -78,6 +78,7 @@ Key `values.yaml` options:
 | Parameter | Default | Description |
 |---|---|---|
 | `agent.containerd.socketPath` | `/run/containerd/containerd.sock` | Path to the containerd socket on the host |
+| `agent.auth.token` | `""` | Shared secret for agent-to-server auth (recommended for production) |
 | `config.logLevel` | `info` | Log level: `debug`, `info`, `warn`, `error` |
 | `config.watchNamespaces` | `""` (all) | Comma-separated namespaces to watch for pod correlation |
 | `config.historyTTL` | `30m` | How long completed pulls remain visible |
@@ -95,10 +96,9 @@ See [`charts/pulltrace/values.yaml`](charts/pulltrace/values.yaml) for the full 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/v1/pulls` | List all active and recent image pulls |
-| `GET` | `/api/v1/pulls/{id}` | Get a specific pull by ID |
 | `GET` | `/api/v1/events` | SSE stream of real-time `PullEvent` objects |
 | `POST` | `/api/v1/report` | Agent report endpoint (internal) |
-| `GET` | `/metrics` | Prometheus metrics |
+| `GET` | `/metrics` | Prometheus metrics (port 9090) |
 | `GET` | `/healthz` | Health check |
 | `GET` | `/` | Web UI |
 
@@ -148,6 +148,17 @@ See [`docs/schemas/pull-event-v1.json`](docs/schemas/pull-event-v1.json) for the
 | `pulltrace_pull_duration_seconds` | Histogram | Image pull duration |
 | `pulltrace_pull_bytes_total` | Counter | Total bytes downloaded |
 | `pulltrace_agents_connected` | Gauge | Number of connected agents |
+
+## Security
+
+Pulltrace has no built-in authentication. The API exposes cluster inventory data (node names, pod names, image references).
+
+- **Agent token** — set `agent.auth.token` in `values.yaml` to require agents to authenticate with the server. Both agent and server must use the same token.
+- **Network isolation** — enable `networkPolicy.enabled=true` to restrict who can reach the server (recommended for production).
+- **Ingress auth** — if exposing via ingress, front it with an authenticating proxy (e.g., `oauth2-proxy`).
+- **Agent socket** — the agent requires `runtimeSocket.enabled=true` and `runtimeSocket.risksAcknowledged=true`. Helm will fail if the socket is enabled without the acknowledgment.
+
+See [SECURITY.md](SECURITY.md) for the full threat model.
 
 ## Known Limitations
 
