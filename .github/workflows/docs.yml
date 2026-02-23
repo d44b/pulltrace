@@ -10,6 +10,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-gh-pages
+      cancel-in-progress: false   # never abort an in-flight gh-pages deployment
     steps:
       - uses: actions/checkout@v4
 

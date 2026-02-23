@@ -8,7 +8,7 @@ on:
     branches: ["main"]
 
 permissions:
-  contents: read
+  contents: write   # required by softprops/action-gh-release and peaceiris/actions-gh-pages push
   packages: write
 
 concurrency:
