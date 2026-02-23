@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-23 after v0.2 milestone start)
 Phase: 5 of 6 (Housekeeping)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-23 — Phase 5 Housekeeping complete (1/1 plans)
+Last activity: 2026-02-23 — Completed quick task 1: fix speed drops to zero when concurrent pull completes
 
 Progress: [###############░░░░░] 75% (5/6 phases complete)
 
@@ -38,7 +38,6 @@ Progress: [###############░░░░░] 75% (5/6 phases complete)
 - Trend: stable
 
 *Updated after each plan completion*
-| Phase quick P1 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -56,6 +55,12 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 None (previous pending todos are now captured as MAINT-01, MAINT-02, COMM-01 in v0.2 requirements).
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Fix speed drops to zero when concurrent pull completes | 2026-02-23 | 09985e0 | [1-theres-a-bug-that-when-im-pulling-two-im](.planning/quick/1-theres-a-bug-that-when-im-pulling-two-im/) |
 
 ### Blockers/Concerns
 
