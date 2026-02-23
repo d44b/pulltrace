@@ -68,11 +68,11 @@ Plans:
   3. `https://d44b.github.io/pulltrace/charts/index.yaml` is publicly reachable and contains a valid chart entry
   4. A semver tag push triggers CI to produce a GitHub Release with a title, install commands, and a link to the CHANGELOG entry
   5. The docs site at the gh-pages root is intact after the `helm-pages` job completes (no mutual destruction)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Fix ci.yml permissions (contents: write) and add helm-pages CI job
-- [ ] 03-02: Add github-release CI job using softprops/action-gh-release@v2
+- [ ] 03-01-PLAN.md — Fix ci.yml permissions (contents: write), add helm-pages steps to helm-release job, add shared deploy-gh-pages concurrency group to ci.yml and docs.yml
+- [ ] 03-02-PLAN.md — Add github-release job to ci.yml using softprops/action-gh-release@v2 with artifact sharing from helm-release
 
 ### Phase 4: Launch
 **Goal**: All v0.1.0 artifacts are public and reachable by an unauthenticated user; the project is in an announcement-ready state
