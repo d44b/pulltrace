@@ -37,7 +37,23 @@ pulltrace/
 ```bash
 git clone https://github.com/d44b/pulltrace.git
 cd pulltrace
+```
 
+### Building with Docker (Go 1.22 required locally)
+
+The project's `go.mod` requires Go 1.22.0. If your local Go installation is older (e.g., Go 1.18), `make build` will fail with a toolchain version error. Use Docker to build instead:
+
+```bash
+# Build Go binaries via Docker
+docker run --rm -v $(pwd):/app -w /app golang:1.22-alpine go build ./...
+
+# Run tests via Docker
+docker run --rm -v $(pwd):/app -w /app golang:1.22-alpine go test ./...
+```
+
+CI uses `golang:1.22-alpine` via the Dockerfile, so pushed code will build correctly in CI even if your local build fails.
+
+```bash
 # Build Go binaries
 make build
 
