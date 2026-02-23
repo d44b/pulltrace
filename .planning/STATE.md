@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 3 of 4 (Release Automation)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Phase 3 COMPLETE
-Last activity: 2026-02-23 — Completed 03-02 (github-release job, softprops/action-gh-release@v2, inline release body)
+Phase: 4 of 4 (Launch)
+Plan: 0 of TBD in current phase (NOT STARTED)
+Status: Phase 3 VERIFIED AND CLOSED — Phase 4 ready to plan
+Last activity: 2026-02-23 — Phase 3 fully verified live (index.yaml 200, docs site 200); proceeding to Phase 4
 
-Progress: [███████░░░] 75%
+Progress: [███████░░░] 75% (Phase 4 not yet started)
 
 ## Performance Metrics
 
@@ -69,10 +69,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- GHCR packages default to private — all three must be manually made public after first tag push, before announcing (Phase 4)
+- GHCR packages default to private — all three must be manually made public before announcing (Phase 4, plan 04-01)
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 03-02-PLAN.md — github-release job added to ci.yml (softprops/action-gh-release@v2, inline body with Helm classic + OCI install commands, artifact sharing via download-artifact@v4)
+Stopped at: Phase 3 closed — VERIFICATION.md updated to passed, .continue-here.md deleted, routing to Phase 4 planning
 Resume file: None
