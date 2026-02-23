@@ -23,14 +23,14 @@ Requirements for the v0.1.0 public release. Each maps to roadmap phases.
 
 ### Helm Chart Discoverability
 
-- [ ] **HELM-01**: `helm repo add pulltrace https://d44b.github.io/pulltrace/charts` succeeds and returns success confirmation
-- [ ] **HELM-02**: `helm install pulltrace pulltrace/pulltrace` installs successfully from the classic Helm repository index
-- [ ] **HELM-03**: `index.yaml` is served from `https://d44b.github.io/pulltrace/charts/index.yaml`
-- [ ] **HELM-04**: CI job on semver tag packages Helm chart `.tgz`, runs `helm repo index --merge`, and pushes to `gh-pages` branch `/charts/` path without overwriting the docs
+- [x] **HELM-01**: `helm repo add pulltrace https://d44b.github.io/pulltrace/charts` succeeds and returns success confirmation
+- [x] **HELM-02**: `helm install pulltrace pulltrace/pulltrace` installs successfully from the classic Helm repository index
+- [x] **HELM-03**: `index.yaml` is served from `https://d44b.github.io/pulltrace/charts/index.yaml`
+- [x] **HELM-04**: CI job on semver tag packages Helm chart `.tgz`, runs `helm repo index --merge`, and pushes to `gh-pages` branch `/charts/` path without overwriting the docs
 
 ### Release Infrastructure
 
-- [ ] **REL-01**: `ci.yml` has `contents: write` permission (currently `contents: read` — blocks GitHub Release creation)
+- [x] **REL-01**: `ci.yml` has `contents: write` permission (currently `contents: read` — blocks GitHub Release creation)
 - [ ] **REL-02**: Pushing `git tag v0.1.0` triggers CI to create a GitHub Release with title, body (what's new, install commands, compatibility), and changelog link
 - [ ] **REL-03**: All three GHCR packages (`pulltrace-agent`, `pulltrace-server`, `charts/pulltrace`) are set to public visibility
 - [ ] **REL-04**: v0.1.0 tag is pushed and all artifacts are live: Docker images at GHCR, Helm chart at `ghcr.io/d44b/charts/pulltrace` (OCI) and `d44b.github.io/pulltrace/charts` (classic), GitHub Release created
@@ -94,11 +94,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCS-03 | Phase 2 - Documentation Site | Pending |
 | DOCS-04 | Phase 2 - Documentation Site | Pending |
 | DOCS-05 | Phase 2 - Documentation Site | Pending |
-| HELM-01 | Phase 3 - Release Automation | Pending |
-| HELM-02 | Phase 3 - Release Automation | Pending |
-| HELM-03 | Phase 3 - Release Automation | Pending |
-| HELM-04 | Phase 3 - Release Automation | Pending |
-| REL-01 | Phase 3 - Release Automation | Pending |
+| HELM-01 | Phase 3 - Release Automation | Complete |
+| HELM-02 | Phase 3 - Release Automation | Complete |
+| HELM-03 | Phase 3 - Release Automation | Complete |
+| HELM-04 | Phase 3 - Release Automation | Complete |
+| REL-01 | Phase 3 - Release Automation | Complete |
 | REL-02 | Phase 3 - Release Automation | Pending |
 | REL-03 | Phase 4 - Launch | Pending |
 | REL-04 | Phase 4 - Launch | Pending |

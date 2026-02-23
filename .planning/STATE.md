@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** A DevOps engineer can install Pulltrace with a single `helm install` command, find docs explaining how it works, and trust it as a credible open source project.
-**Current focus:** Phase 2 - Documentation Site (COMPLETE)
+**Current focus:** Phase 3 - Release Automation
 
 ## Current Position
 
-Phase: 2 of 4 (Documentation Site)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Phase 2 complete
-Last activity: 2026-02-23 — Completed 02-02 (full documentation content, all 7 pages)
+Phase: 3 of 4 (Release Automation)
+Plan: 1 of 2 in current phase (COMPLETE)
+Status: Phase 3 in progress
+Last activity: 2026-02-23 — Completed 03-01 (CI permissions fix, Helm pages pipeline, concurrency group)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 62%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 7min
-- Total execution time: 35min
+- Total plans completed: 6
+- Average duration: 6min
+- Total execution time: 36min
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-foundation-files | 3 | 17min | 6min |
 | 02-documentation-site | 2 | 18min | 9min |
+| 03-release-automation | 1 | 1min | 1min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (8min), 01-02 (8min), 01-03 (1min), 02-01 (8min), 02-02 (10min)
+- Last 5 plans: 01-03 (1min), 02-01 (8min), 02-02 (10min), 03-01 (1min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -39,6 +40,7 @@ Progress: [█████░░░░░] 50%
 | Phase 01-foundation-files P03 | 1min | 2 tasks | 0 files |
 | Phase 02-documentation-site P01 | 8min | 2 tasks | 9 files |
 | Phase 02-documentation-site P02 | 10min | 3 tasks | 7 files |
+| Phase 03-release-automation P01 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -56,6 +58,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-files]: golang:1.22-alpine used in Docker workaround command to match Dockerfile.server FROM line exactly
 - [Phase 01-foundation-files]: CHANGELOG.md comparison links acceptable as 404 until v0.1.0 tag pushed in Phase 4
 - [Phase 01-foundation-files]: GitHub topics set via gh CLI (scriptable, idempotent); social preview deferred to manual upload via Settings UI
+- [Phase 03-release-automation]: No --merge flag for v0.1.0 helm repo index (no prior index.yaml exists; use --merge for v0.2.0+)
+- [Phase 03-release-automation]: cancel-in-progress:false on deploy-gh-pages concurrency — never abort an in-flight gh-pages push
 
 ### Pending Todos
 
@@ -63,12 +67,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- ci.yml has `contents: read` permission — must be changed to `contents: write` before pushing v0.1.0 tag (Phase 3)
 - GHCR packages default to private — all three must be manually made public after first tag push, before announcing (Phase 4)
-- docs.yml and ci.yml may both trigger on semver tag push and race to write gh-pages — add concurrency group or restrict docs.yml to main-only (Phase 3)
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 02-02-PLAN.md — Full documentation content for all 7 pages; Phase 2 complete
+Stopped at: Completed 03-01-PLAN.md — CI permissions fix (contents:write), Helm pages pipeline (helm repo index + peaceiris gh-pages), shared deploy-gh-pages concurrency group
 Resume file: None
