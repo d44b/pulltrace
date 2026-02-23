@@ -38,6 +38,7 @@ Progress: [###############░░░░░] 75% (5/6 phases complete)
 - Trend: stable
 
 *Updated after each plan completion*
+| Phase quick P1 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -50,6 +51,7 @@ Recent decisions affecting current work:
 - [Phase 04-launch]: v0.1.0 tag was already on origin; CI run #22316078048 all 7 jobs green; all 8 post-launch artifact checks passed
 - [Phase 04-launch]: GHCR v2 /tags/list always returns 401 regardless of visibility — use gh api /users/{owner}/packages/container/{name} to verify package visibility
 - COMM-01 (social preview image) is a manual browser step — no GitHub API exists; document the step, do not automate
+- [Phase quick-1]: Use per-key lastBytes map on Server to enforce monotonic bytes fed to RateCalculator, preventing speed-drop-to-zero when concurrent pulls complete
 
 ### Pending Todos
 
