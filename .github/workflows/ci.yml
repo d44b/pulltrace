@@ -141,6 +141,9 @@ jobs:
     runs-on: ubuntu-latest
     # Only on semver tags
     if: startsWith(github.ref, 'refs/tags/v')
+    concurrency:
+      group: deploy-gh-pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -166,3 +169,30 @@ jobs:
         run: |
           helm push /tmp/charts/pulltrace-${{ steps.version.outputs.version }}.tgz \
             oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: /tmp/charts/pulltrace-${{ steps.version.outputs.version }}.tgz
+          retention-days: 1
+
+      - name: Stage Helm repo files
+        run: |
+          mkdir -p /tmp/helm-pages
+          cp /tmp/charts/pulltrace-${{ steps.version.outputs.version }}.tgz /tmp/helm-pages/
+
+      - name: Generate Helm repo index
+        run: |
+          helm repo index /tmp/helm-pages \
+            --url https://d44b.github.io/pulltrace/charts
+
+      - name: Deploy charts to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: /tmp/helm-pages
+          publish_branch: gh-pages
+          destination_dir: charts
+          keep_files: true
+          commit_message: "chore: Helm chart ${{ github.ref_name }}"
