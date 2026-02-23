@@ -123,6 +123,11 @@ type Server struct {
 	pulls       map[string]*model.PullStatus
 	rates       map[string]*model.RateCalculator
 	lastSeen    map[string]time.Time
+	// lastBytes tracks the highest cumulative downloadedBytes ever fed to each
+	// RateCalculator. This ensures rc.Add always receives a monotonically
+	// non-decreasing value so that Rate() never goes negative when a concurrent
+	// pull finishes and the merged byte total drops.
+	lastBytes   map[string]int64
 	sseClients  map[chan []byte]struct{}
 	sseMu       sync.Mutex
 	webFS       fs.FS
@@ -146,6 +151,7 @@ func New(cfg Config, webFS fs.FS) *Server {
 		pulls:       make(map[string]*model.PullStatus),
 		rates:       make(map[string]*model.RateCalculator),
 		lastSeen:    make(map[string]time.Time),
+		lastBytes:   make(map[string]int64),
 		sseClients:  make(map[chan []byte]struct{}),
 		webFS:       webFS,
 		rateLimiter: newRateLimiter(),
@@ -401,7 +407,13 @@ func (s *Server) processReport(report model.AgentReport) {
 				lrc = model.NewRateCalculator(10 * time.Second)
 				s.rates[layerKey] = lrc
 			}
-			lrc.Add(layer.DownloadedBytes)
+			layerPrev := s.lastBytes[layerKey]
+			layerDelta := layer.DownloadedBytes - layerPrev
+			if layerDelta < 0 {
+				layerDelta = 0
+			}
+			s.lastBytes[layerKey] = layerPrev + layerDelta
+			lrc.Add(layerPrev + layerDelta)
 			ls.BytesPerSec = lrc.Rate()
 
 			if layer.TotalKnown && layer.TotalBytes > 0 {
@@ -432,7 +444,13 @@ func (s *Server) processReport(report model.AgentReport) {
 			rc = model.NewRateCalculator(10 * time.Second)
 			s.rates[key] = rc
 		}
-		rc.Add(downloadedBytes)
+		prev := s.lastBytes[key]
+		delta := downloadedBytes - prev
+		if delta < 0 {
+			delta = 0
+		}
+		s.lastBytes[key] = prev + delta
+		rc.Add(prev + delta)
 		existing.BytesPerSec = rc.Rate()
 		if existing.TotalKnown && existing.TotalBytes > existing.DownloadedBytes {
 			existing.ETASeconds = rc.ETA(existing.TotalBytes - existing.DownloadedBytes)
@@ -630,10 +648,12 @@ func (s *Server) cleanup() {
 			delete(s.pulls, key)
 			delete(s.rates, key)
 			delete(s.lastSeen, key)
+			delete(s.lastBytes, key)
 			layerPrefix := key + ":layer:"
 			for rateKey := range s.rates {
 				if strings.HasPrefix(rateKey, layerPrefix) {
 					delete(s.rates, rateKey)
+					delete(s.lastBytes, rateKey)
 				}
 			}
 			continue
