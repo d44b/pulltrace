@@ -82,11 +82,11 @@ Plans:
   1. `docker pull ghcr.io/d44b/pulltrace-agent:0.1.0` succeeds from an unauthenticated shell
   2. The GitHub Release page for v0.1.0 exists with a release body, attached Helm chart `.tgz`, and correct Docker image tags
   3. `helm install pulltrace pulltrace/pulltrace --version 0.1.0` resolves the chart from the classic Helm repo
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Make all three GHCR packages public (pulltrace-agent, pulltrace-server, charts/pulltrace)
-- [ ] 04-02: Push git tag v0.1.0, run pre-flight checklist, verify all artifacts live
+- [ ] 04-01-PLAN.md — Confirm GHCR packages exist and change all three to public visibility (REL-03)
+- [ ] 04-02-PLAN.md — Push git tag v0.1.0, monitor CI, verify all v0.1.0 artifacts live (REL-04)
 
 ## Progress
 
