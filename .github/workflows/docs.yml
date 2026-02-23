@@ -1,0 +1,40 @@
+name: Docs
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write   # required by peaceiris/actions-gh-pages to push gh-pages branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          key: mkdocs-material-9.7.2
+          path: ~/.cache
+          restore-keys: mkdocs-
+
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material==9.7.2
+
+      - name: Build docs
+        run: mkdocs build --strict --site-dir site
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          keep_files: true
+          destination_dir: "."
