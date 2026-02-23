@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Pulltrace has a working product core (agent DaemonSet, server, React UI, Helm chart, CI pipeline). The gap is the "release wrapper" — the files, workflows, and hosted pages that make a stranger trust the project enough to install a privileged DaemonSet on their cluster. Research against cert-manager, KEDA, external-secrets, metrics-server, and flux2 shows the bar clearly: a credible v0.1.0 Kubernetes tool requires community files (CONTRIBUTING.md, CHANGELOG.md, CODE_OF_CONDUCT.md), a functional `helm repo add` install path, a GitHub Release with a useful body, and a documentation site that goes beyond the README. None of these are hard individually; the complexity is in doing them in the right order without stepping on each other.
+Pulltrace has a working product core (agent DaemonSet, server, React UI, Helm chart, CI pipeline). The gap is the "release wrapper" — the files, workflows, and hosted pages that make a stranger trust the project enough to install a privileged DaemonSet on their cluster. Research against cert-manager, KEDA, external-secrets, metrics-server, and flux2 shows the bar clearly: a credible v0.1.0 Kubernetes tool requires community files (CONTRIBUTING.md, CHANGELOG.md), a functional `helm repo add` install path, a GitHub Release with a useful body, and a documentation site that goes beyond the README. None of these are hard individually; the complexity is in doing them in the right order without stepping on each other. Note: CODE_OF_CONDUCT.md is intentionally omitted from this project — do not create it.
 
 The recommended approach is Material for MkDocs 9.7.x on GitHub Pages (Python, no Node.js, three-line CI workflow, dominant standard in the Kubernetes ecosystem) for the docs site, combined with a manual `helm repo index` job that writes to a `charts/` subdirectory of the same `gh-pages` branch. The two deployments must use `peaceiris/actions-gh-pages` with `keep_files: true` — the single most important architectural constraint — so that docs deploys do not wipe the Helm index and vice versa. The existing CI's OCI push to GHCR is kept as-is; the classic `helm repo add` path is additive on top.
 
@@ -42,7 +42,7 @@ Based on analysis of cert-manager, KEDA, external-secrets, metrics-server, and f
 **Must have (table stakes) — v0.1.0:**
 - **CONTRIBUTING.md** — prerequisites, Docker build workaround for Go 1.22 (critical for this project), `make` commands, PR guidelines
 - **CHANGELOG.md** — keep-a-changelog format; must exist before tagging so release body has content to reference
-- **CODE_OF_CONDUCT.md** — Contributor Covenant v2.1 verbatim; ~15 minutes to add
+- ~~**CODE_OF_CONDUCT.md**~~ — intentionally omitted; **do NOT create CODE_OF_CONDUCT.md**
 - **Helm repo via `helm repo add`** — the README already promises this URL; it must work; OCI-only is a user confusion landmine
 - **GitHub Release v0.1.0** — release body with install commands, compatibility matrix, known limitations, links; CI must create it, not just the auto-generated source zip
 - **README badges** — CI status, Apache 2.0 license, Kubernetes 1.28+ compatibility; Shields.io URLs
@@ -70,7 +70,7 @@ The gh-pages branch serves dual purposes: MkDocs compiled output at the root (br
 2. **`gh-pages` branch `charts/` subdir** — Helm `index.yaml` + `.tgz` files; updated by `helm-pages` CI job on semver tags only via `helm repo index --merge`
 3. **GitHub Releases** — created by a new `github-release` job in `ci.yml` using `softprops/action-gh-release@v2`, gated on `needs: [docker, helm-release]`; release body populated from CHANGELOG.md section
 4. **GHCR OCI registry** — existing; `pulltrace-agent`, `pulltrace-server`, and `charts/pulltrace` packages must each be made public manually after first push
-5. **Community files** — `CONTRIBUTING.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md` at repo root; written by hand, no tooling required
+5. **Community files** — `CONTRIBUTING.md`, `CHANGELOG.md` at repo root; written by hand, no tooling required (CODE_OF_CONDUCT.md intentionally omitted — do NOT create it)
 
 **Key architectural constraint:** Never run `mkdocs gh-deploy --force`. Always use `peaceiris/actions-gh-pages` with `keep_files: true`. `helm-pages` job must use `needs: [helm-release]`. `github-release` job must use `needs: [docker, helm-release]`.
 
@@ -94,7 +94,7 @@ Based on research dependencies and pitfall ordering, the work naturally groups i
 
 ### Phase 1: Foundation Files
 **Rationale:** Community files are independent of all other work and unblock contributors from the moment the repo goes public. CHANGELOG.md is a hard prerequisite for the GitHub Release body. These are all low-effort, high-signal items that cost < 4 hours combined.
-**Delivers:** CONTRIBUTING.md (with Go 1.22 Docker build workaround), CHANGELOG.md (keep-a-changelog format, `[0.1.0]` entry), CODE_OF_CONDUCT.md (Contributor Covenant v2.1), GitHub repo metadata (description + topics)
+**Delivers:** CONTRIBUTING.md (with Go 1.22 Docker build workaround), CHANGELOG.md (keep-a-changelog format, `[0.1.0]` entry), GitHub repo metadata (description + topics). Do NOT create CODE_OF_CONDUCT.md — it is intentionally omitted.
 **Addresses:** Table-stakes features from FEATURES.md
 **Avoids:** Pitfall 8 (first contributors hit Go 1.22 wall with no guidance)
 

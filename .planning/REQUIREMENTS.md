@@ -37,8 +37,8 @@ Requirements for the v0.1.0 public release. Each maps to roadmap phases.
 
 ### Bug Fixes
 
-- [ ] **FIX-01**: `pulltrace_pull_errors_total` Prometheus counter is incremented when a pull completes with a non-empty `PullStatus.Error` field
-- [ ] **FIX-02**: Server populates `layer.bytesPerSec` and `layer.mediaType` in `PullStatus.Layers` so the LayerDetail component can display speed and content type
+- [x] **FIX-01**: `pulltrace_pull_errors_total` Prometheus counter is incremented when a pull completes with a non-empty `PullStatus.Error` field
+- [x] **FIX-02**: Server populates `layer.bytesPerSec` and `layer.mediaType` in `PullStatus.Layers` so the LayerDetail component can display speed and content type
 
 ### Repository Metadata
 
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMM-01 | Phase 1 - Foundation Files | Complete |
 | COMM-02 | Phase 1 - Foundation Files | Complete |
 | COMM-03 | Removed — CODE_OF_CONDUCT.md intentionally omitted | N/A |
-| FIX-01 | Phase 1 - Foundation Files | Pending |
-| FIX-02 | Phase 1 - Foundation Files | Pending |
+| FIX-01 | Phase 1 - Foundation Files | Complete |
+| FIX-02 | Phase 1 - Foundation Files | Complete |
 | META-01 | Phase 1 - Foundation Files | Complete |
 | DOCS-01 | Phase 2 - Documentation Site | Pending |
 | DOCS-02 | Phase 2 - Documentation Site | Pending |

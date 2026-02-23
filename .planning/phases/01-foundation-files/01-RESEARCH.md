@@ -11,7 +11,7 @@
 |----|-------------|-----------------|
 | COMM-01 | CONTRIBUTING.md with local dev setup (Go 1.22 + Docker workaround), build instructions, and PR guidelines | File exists but is missing the Go 1.22 Docker workaround — needs a new section added |
 | COMM-02 | CHANGELOG.md in keep-a-changelog format with a [0.1.0] entry | File does not exist — must be created from scratch at repo root |
-| COMM-03 | CODE_OF_CONDUCT.md (Contributor Covenant v2.1) | File exists but is severely truncated (32 lines vs ~145 lines) — must be replaced with full v2.1 text |
+| ~~COMM-03~~ | ~~CODE_OF_CONDUCT.md~~ | **Removed — do NOT create CODE_OF_CONDUCT.md** |
 | FIX-01 | `pulltrace_pull_errors_total` counter incremented when pull completes with non-empty Error field | Counter defined in metrics.go but never called — one-line fix in server.go processReport |
 | FIX-02 | Server populates `layer.bytesPerSec` and `layer.mediaType` so LayerDetail can display them | LayerStatus struct has both fields; server never populates them — requires layer-level rate tracking and MediaType copy |
 | META-01 | GitHub repo has description, topics (kubernetes, monitoring, containers, helm, containerd), and social preview image | Description already set; topics empty; social preview is UI-only (no API) |
@@ -21,13 +21,13 @@
 
 ## Summary
 
-Phase 1 delivers the credibility signals that distinguish an active open-source project from an abandoned repo. Five of the six requirements are pure file operations or small Go/metadata changes. One requirement (FIX-02: layer bytesPerSec) is a moderate Go change that requires per-layer rate tracking, but the data model is already in place.
+Phase 1 delivers the credibility signals that distinguish an active open-source project from an abandoned repo. Five of the six original requirements are pure file operations or small Go/metadata changes. One requirement (FIX-02: layer bytesPerSec) is a moderate Go change that requires per-layer rate tracking, but the data model is already in place.
 
-The biggest trap in this phase is assuming the existing CONTRIBUTING.md and CODE_OF_CONDUCT.md satisfy their requirements. Audit them first: CONTRIBUTING.md omits the Go 1.22 + Docker workaround (the project memory explicitly notes `go 1.18 on local machine can't parse go 1.22.0`) and CODE_OF_CONDUCT.md is a 32-line stub missing the Scope, Enforcement Responsibilities, Enforcement Guidelines (four escalation levels), and contact method placeholder that define Contributor Covenant v2.1. Both files need substantive additions, not rewrites.
+COMM-03 (CODE_OF_CONDUCT.md) has been intentionally removed. Do NOT create CODE_OF_CONDUCT.md.
 
 The GitHub social preview image (META-01) is the only requirement that cannot be automated — the GitHub API and `gh` CLI do not expose social preview upload. The plan must document this as a manual step with a generated placeholder image.
 
-**Primary recommendation:** Fix files in order of simplest to most complex — COMM-03 (replace CoC), COMM-02 (create CHANGELOG.md), META-01 (gh repo edit + manual UI step), COMM-01 (add Docker workaround section to CONTRIBUTING.md), FIX-01 (one-line metrics increment), FIX-02 (layer rate calculator + MediaType copy).
+**Primary recommendation:** Fix files in order of simplest to most complex — COMM-02 (create CHANGELOG.md), META-01 (gh repo edit + manual UI step), COMM-01 (add Docker workaround section to CONTRIBUTING.md), FIX-01 (one-line metrics increment), FIX-02 (layer rate calculator + MediaType copy).
 
 ---
 
@@ -39,7 +39,7 @@ This section documents the actual state of each requirement before work begins. 
 |-----|-----------|---------------|-----|
 | COMM-01 | `CONTRIBUTING.md` (3.9K, 132 lines) | Has build steps, running locally, PR guidelines | Missing: Go 1.22 + Docker workaround for devs on older Go |
 | COMM-02 | `CHANGELOG.md` | Does not exist | Create from scratch |
-| COMM-03 | `CODE_OF_CONDUCT.md` (1.0K, 32 lines) | Truncated stub — no Scope, no Enforcement Responsibilities, no 4-level Enforcement Guidelines, no contact method | Replace with full Contributor Covenant v2.1 (~145 lines) |
+| ~~COMM-03~~ | `CODE_OF_CONDUCT.md` | **Removed — do NOT create this file** | N/A |
 | FIX-01 | `internal/metrics/metrics.go` + `internal/server/server.go` | `PullErrors` counter defined, never incremented | Add `metrics.PullErrors.Inc()` in `processReport` at pull completion when `pull.Error != ""` |
 | FIX-02 | `internal/server/server.go` `processReport()` | `LayerStatus.BytesPerSec` and `LayerStatus.MediaType` never populated | Populate MediaType from agent report; add per-layer rate calculator |
 | META-01 | GitHub repo | Description set; topics: empty; social preview: not set | Add 5 topics via `gh repo edit`; social preview requires GitHub UI (not automatable) |
@@ -205,7 +205,6 @@ gh api repos/d44b/pulltrace --jq '.topics'
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
 | Layer download speed | Custom sliding window | `model.RateCalculator` (already in codebase) | Already used for pull-level rates; same type works for layers |
-| Contributor Covenant text | Custom CoC | Copy from contributor-covenant.org v2.1 verbatim | Legal-style doc — verbatim copy required for attribution validity |
 | Changelog generation | Script/automation | Hand-authored CHANGELOG.md | v0.1.0 is first release; automation adds complexity for a one-time event |
 | Repo topic setting | GitHub UI clicks | `gh repo edit --add-topic` | Repeatable, scriptable, verifiable |
 
@@ -219,11 +218,11 @@ gh api repos/d44b/pulltrace --jq '.topics'
 **How to avoid:** Insert the workaround in the "Development Setup" section, immediately before the `make build` command, as a named subsection "Building with Docker (Go 1.22 required locally)."
 **Warning signs:** If the workaround appears after the "Running locally" section, it will be missed.
 
-### Pitfall 2: CODE_OF_CONDUCT.md: keep the stub, don't replace it
-**What goes wrong:** Extending the existing 32-line stub instead of replacing it.
-**Why it happens:** Edit instead of overwrite.
-**How to avoid:** Replace the file entirely with the full Contributor Covenant v2.1 text. The existing stub is missing Scope, Enforcement Responsibilities, Enforcement Guidelines, and the `[INSERT CONTACT METHOD]` placeholder.
-**Warning signs:** If the resulting file is under 100 lines, it's still truncated.
+### Pitfall 2: Creating CODE_OF_CONDUCT.md
+**What goes wrong:** An executor sees COMM-03 references in old notes and creates CODE_OF_CONDUCT.md anyway.
+**Why it happens:** COMM-03 appears in research files and old summaries.
+**How to avoid:** COMM-03 is removed. CODE_OF_CONDUCT.md must NOT be created. If it exists, delete it.
+**Warning signs:** Any task or step that writes CODE_OF_CONDUCT.md.
 
 ### Pitfall 3: FIX-01 — where is pull.Error set?
 **What goes wrong:** `PullState` (agent report) has no `Error` field. `PullStatus.Error` exists but the agent never sets it.
@@ -383,7 +382,7 @@ gh api repos/d44b/pulltrace --jq '.topics'
 ### Primary (HIGH confidence)
 - Direct code inspection: `internal/metrics/metrics.go` — PullErrors counter defined, never called
 - Direct code inspection: `internal/server/server.go` — processReport() layer loop missing MediaType/BytesPerSec
-- Direct code inspection: `CODE_OF_CONDUCT.md` — 32 lines, confirmed truncated stub
+- ~~Direct code inspection: `CODE_OF_CONDUCT.md`~~ — file removed; COMM-03 dropped
 - Direct code inspection: `CONTRIBUTING.md` — missing Go 1.22 Docker workaround
 - `gh api repos/d44b/pulltrace --jq '.topics'` — confirmed topics: [] (empty)
 - `gh repo edit --help` — confirmed `--add-topic` flag exists
@@ -403,7 +402,7 @@ gh api repos/d44b/pulltrace --jq '.topics'
 **Confidence breakdown:**
 - COMM-01 (CONTRIBUTING.md gap): HIGH — direct file read confirms missing Docker workaround
 - COMM-02 (CHANGELOG.md): HIGH — file confirmed absent (`ls` output)
-- COMM-03 (CODE_OF_CONDUCT.md): HIGH — 32-line file confirmed, v2.1 is ~145 lines
+- ~~COMM-03 (CODE_OF_CONDUCT.md)~~: Removed — do NOT create this file
 - FIX-01 (metrics increment): HIGH — code read confirms PullErrors never called; one-line fix location identified
 - FIX-02 (layer rates): HIGH — code read confirms LayerStatus fields unpopulated; fix location and pattern identified
 - META-01 (GitHub metadata): HIGH — gh CLI confirmed, topics confirmed empty, social preview UI-only confirmed
