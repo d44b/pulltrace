@@ -23,7 +23,7 @@ Full details: `.planning/milestones/v0.1-ROADMAP.md`
 
 **Milestone Goal:** Clean up post-launch debt, fix CI for future releases, and fully validate pulltrace on a live cluster.
 
-- [ ] **Phase 5: Housekeeping** - Fix dead links, CI merge flag, document social preview
+- [x] **Phase 5: Housekeeping** - Fix dead links, CI merge flag, document social preview
 - [ ] **Phase 6: d4b Cluster Validation** - Deploy and verify all features on live cluster
 
 ## Phase Details
@@ -39,7 +39,7 @@ Full details: `.planning/milestones/v0.1-ROADMAP.md`
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01-PLAN.md — Fix CI --merge flag, document social preview step, close all Phase 5 requirements
+- [x] 05-01-PLAN.md — Fix CI --merge flag, document social preview step, close all Phase 5 requirements
 
 ### Phase 6: d4b Cluster Validation
 **Goal**: pulltrace is confirmed working end-to-end on the d4b cluster — UI, metrics, pod correlation, and layer drill-down all verified against live traffic
@@ -61,5 +61,5 @@ Plans:
 | 2. Documentation Site | v0.1 | 2/2 | Complete | 2026-02-23 |
 | 3. Release Automation | v0.1 | 2/2 | Complete | 2026-02-23 |
 | 4. Launch | v0.1 | 2/2 | Complete | 2026-02-23 |
-| 5. Housekeeping | v0.2 | 0/1 | Not started | - |
+| 5. Housekeeping | v0.2 | 1/1 | Complete | 2026-02-23 |
 | 6. d4b Cluster Validation | v0.2 | 0/? | Not started | - |
