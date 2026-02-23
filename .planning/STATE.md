@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** A DevOps engineer can install Pulltrace with a single `helm install` command, find docs explaining how it works, and trust it as a credible open source project.
-**Current focus:** Phase 3 - Release Automation
+**Current focus:** Phase 4 - Launch
 
 ## Current Position
 
 Phase: 4 of 4 (Launch)
-Plan: 0 of TBD in current phase (NOT STARTED)
-Status: Phase 3 VERIFIED AND CLOSED — Phase 4 ready to plan
-Last activity: 2026-02-23 — Phase 3 fully verified live (index.yaml 200, docs site 200); proceeding to Phase 4
+Plan: 1 of 2 completed in current phase
+Status: Plan 04-01 COMPLETE — GHCR packages public, Plan 04-02 ready
+Last activity: 2026-02-23 — All three GHCR packages set to public; Plan 04-02 (push v0.1.0 tag) unblocked
 
-Progress: [███████░░░] 75% (Phase 4 not yet started)
+Progress: [████████░░] 80% (Phase 4 plan 1/2 complete)
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [███████░░░] 75% (Phase 4 not yet started)
 | Phase 02-documentation-site P02 | 10min | 3 tasks | 7 files |
 | Phase 03-release-automation P01 | 1min | 2 tasks | 2 files |
 | Phase 03-release-automation P02 | 1min | 1 tasks | 1 files |
+| Phase 04-launch P01 | 5min | 2 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase 03-release-automation]: No --merge flag for v0.1.0 helm repo index (no prior index.yaml exists; use --merge for v0.2.0+)
 - [Phase 03-release-automation]: cancel-in-progress:false on deploy-gh-pages concurrency — never abort an in-flight gh-pages push
 - [Phase 03-release-automation]: needs: [helm-release] not needs: [docker] for github-release job — ensures release appears only after Helm index is live
+- [Phase 04-launch]: GHCR v2 /tags/list always returns 401 regardless of visibility — use gh api /users/{owner}/packages/container/{name} to verify package visibility
+- [Phase 04-launch]: All three GHCR packages (pulltrace-agent, pulltrace-server, charts/pulltrace) set to public before v0.1.0 tag push — Plan 04-02 unblocked
 
 ### Pending Todos
 
@@ -69,10 +72,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- GHCR packages default to private — all three must be manually made public before announcing (Phase 4, plan 04-01)
+None — GHCR packages blocker resolved (all three packages set to public in Plan 04-01).
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Phase 3 closed — VERIFICATION.md updated to passed, .continue-here.md deleted, routing to Phase 4 planning
+Stopped at: Completed 04-01-PLAN.md — GHCR packages public, Plan 04-02 ready
 Resume file: None
