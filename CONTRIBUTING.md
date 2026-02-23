@@ -142,6 +142,3 @@ Open an issue at [github.com/d44b/pulltrace/issues](https://github.com/d44b/pull
 - Expected vs. actual behavior (for bugs).
 - Your environment: Kubernetes version, containerd version, Pulltrace version.
 
-## Code of Conduct
-
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold it.
