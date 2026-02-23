@@ -9,9 +9,9 @@ Requirements for the v0.1.0 public release. Each maps to roadmap phases.
 
 ### Community Files
 
-- [ ] **COMM-01**: Project has `CONTRIBUTING.md` with local dev setup (Go 1.22 + Docker workaround), build instructions (`make`/`docker build`), and PR guidelines
-- [ ] **COMM-02**: Project has `CHANGELOG.md` in keep-a-changelog format with a `[0.1.0]` entry summarizing what the release includes
-- [ ] **COMM-03**: Project has `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1)
+- [x] **COMM-01**: Project has `CONTRIBUTING.md` with local dev setup (Go 1.22 + Docker workaround), build instructions (`make`/`docker build`), and PR guidelines
+- [x] **COMM-02**: Project has `CHANGELOG.md` in keep-a-changelog format with a `[0.1.0]` entry summarizing what the release includes
+- ~~**COMM-03**~~: `CODE_OF_CONDUCT.md` — intentionally omitted; do not create this file
 
 ### Documentation Site
 
@@ -83,9 +83,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMM-01 | Phase 1 - Foundation Files | Pending |
-| COMM-02 | Phase 1 - Foundation Files | Pending |
-| COMM-03 | Phase 1 - Foundation Files | Pending |
+| COMM-01 | Phase 1 - Foundation Files | Complete |
+| COMM-02 | Phase 1 - Foundation Files | Complete |
+| COMM-03 | Removed — CODE_OF_CONDUCT.md intentionally omitted | N/A |
 | FIX-01 | Phase 1 - Foundation Files | Pending |
 | FIX-02 | Phase 1 - Foundation Files | Pending |
 | META-01 | Phase 1 - Foundation Files | Pending |
@@ -104,8 +104,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-04 | Phase 4 - Launch | Pending |
 
 **Coverage:**
-- v1 requirements: 19 total
-- Mapped to phases: 19
+- v1 requirements: 18 total (COMM-03 removed)
+- Mapped to phases: 18
 - Unmapped: 0
 
 ---

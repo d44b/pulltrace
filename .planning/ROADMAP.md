@@ -28,17 +28,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 1: Foundation Files
 **Goal**: The repository signals credibility to first-time visitors and CHANGELOG.md exists as the hard prerequisite for the release body
 **Depends on**: Nothing (first phase)
-**Requirements**: COMM-01, COMM-02, COMM-03, FIX-01, FIX-02, META-01
+**Requirements**: COMM-01, COMM-02, FIX-01, FIX-02, META-01
 **Success Criteria** (what must be TRUE):
   1. A contributor can read CONTRIBUTING.md and run a successful build using the documented Go 1.22 Docker workaround
   2. CHANGELOG.md has a `[0.1.0]` entry in keep-a-changelog format that describes what this release includes
-  3. CODE_OF_CONDUCT.md (Contributor Covenant v2.1) is present at repo root
-  4. `pulltrace_pull_errors_total` counter increments when a pull completes with a non-empty Error field (verifiable via Prometheus /metrics)
-  5. LayerDetail component displays non-zero bytesPerSec and a mediaType string for an active layer pull
+  3. `pulltrace_pull_errors_total` counter increments when a pull completes with a non-empty Error field (verifiable via Prometheus /metrics)
+  4. LayerDetail component displays non-zero bytesPerSec and a mediaType string for an active layer pull
+  5. CODE_OF_CONDUCT.md does NOT exist (intentionally omitted — do not create it)
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Author CONTRIBUTING.md (Docker workaround), CHANGELOG.md, and CODE_OF_CONDUCT.md v2.1
+- [ ] 01-01-PLAN.md — Author CONTRIBUTING.md (Docker workaround) and CHANGELOG.md (do NOT create CODE_OF_CONDUCT.md)
 - [ ] 01-02-PLAN.md — Fix PullErrors metric increment (FIX-01) and layer bytesPerSec/mediaType population (FIX-02)
 - [ ] 01-03-PLAN.md — Set GitHub repo topics via gh CLI and upload social preview image (META-01)
 

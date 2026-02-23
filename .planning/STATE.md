@@ -34,6 +34,7 @@ Progress: [██░░░░░░░░] 17%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation-files P01 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -48,6 +49,8 @@ Recent decisions affecting current work:
 - softprops/action-gh-release@v2 for GitHub Release creation (chart-releaser-action replacement)
 - PullErrors.Inc() placed in processReport() completion path only (not cleanup()) — agent is authoritative error source, cleanup is a timeout safety net
 - Layer rate keys use key+":layer:"+digest compound format enabling HasPrefix bulk-delete on pull eviction
+- [Phase 01-foundation-files]: golang:1.22-alpine used in Docker workaround command to match Dockerfile.server FROM line exactly
+- [Phase 01-foundation-files]: CHANGELOG.md comparison links acceptable as 404 until v0.1.0 tag pushed in Phase 4
 
 ### Pending Todos
 
