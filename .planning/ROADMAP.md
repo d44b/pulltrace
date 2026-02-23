@@ -52,11 +52,11 @@ Plans:
   3. The Configuration page lists every environment variable for both the server and agent with type and default value
   4. The Architecture page has a diagram showing how agent, server, and UI connect
   5. Pushing a commit to `main` automatically deploys updated docs to GitHub Pages within the CI run (no manual step)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Scaffold mkdocs.yml, docs/ source tree, and docs.yml CI workflow
-- [ ] 02-02: Write docs content (installation, configuration, architecture, prometheus, known-limitations, contributing pages)
+- [ ] 02-01-PLAN.md — Scaffold mkdocs.yml, docs/ stub pages (7 files), and docs.yml CI workflow (peaceiris/actions-gh-pages@v4, keep_files: true)
+- [ ] 02-02-PLAN.md — Write full docs content (installation, configuration, architecture, prometheus, known-limitations, contributing, index pages)
 
 ### Phase 3: Release Automation
 **Goal**: Pushing a semver tag causes CI to publish the Helm chart to both the classic `helm repo add` path and GHCR OCI, then create a GitHub Release with a populated body — all without manual intervention
