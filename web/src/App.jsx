@@ -4,11 +4,17 @@ import PullRow from './components/PullRow';
 import { usePulls, useFilters } from './hooks';
 
 const LogoIcon = ({ size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="128" cy="128" r="100" strokeWidth="14" opacity="0.22"/>
-    <path d="M128 28a100 100 0 0 1 100 100" strokeWidth="14"/>
-    <path d="M80 116l48-24 48 24-48 24-48-24Z" strokeWidth="12"/>
-    <path d="M80 148l48 24 48-24" strokeWidth="12"/>
+  <svg width={size} height={size} viewBox="0 0 256 256" fill="none" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="logo-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#58a6ff"/>
+        <stop offset="100%" stopColor="#3fb950"/>
+      </linearGradient>
+    </defs>
+    <circle cx="128" cy="128" r="100" stroke="#58a6ff" strokeWidth="14" opacity="0.20"/>
+    <path d="M128 28a100 100 0 0 1 100 100" stroke="url(#logo-ring)" strokeWidth="14"/>
+    <path d="M80 116l48-24 48 24-48 24-48-24Z" stroke="#58a6ff" strokeWidth="12"/>
+    <path d="M80 148l48 24 48-24" stroke="#3fb950" strokeWidth="12"/>
   </svg>
 );
 
