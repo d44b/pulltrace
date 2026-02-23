@@ -5,10 +5,10 @@ import { usePulls, useFilters } from './hooks';
 
 const LogoIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="128" cy="112" r="54" strokeWidth="12" opacity="0.22"/>
-    <path d="M128 58a54 54 0 0 1 54 54" strokeWidth="12"/>
-    <path d="M80 164l48-24 48 24-48 24-48-24Z" strokeWidth="12"/>
-    <path d="M80 196l48 24 48-24" strokeWidth="12"/>
+    <circle cx="128" cy="128" r="100" strokeWidth="14" opacity="0.22"/>
+    <path d="M128 28a100 100 0 0 1 100 100" strokeWidth="14"/>
+    <path d="M80 116l48-24 48 24-48 24-48-24Z" strokeWidth="12"/>
+    <path d="M80 148l48 24 48-24" strokeWidth="12"/>
   </svg>
 );
 
