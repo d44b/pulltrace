@@ -83,31 +83,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMM-01 | Phase 1 | Pending |
-| COMM-02 | Phase 1 | Pending |
-| COMM-03 | Phase 1 | Pending |
-| FIX-01 | Phase 1 | Pending |
-| FIX-02 | Phase 1 | Pending |
-| META-01 | Phase 1 | Pending |
-| DOCS-01 | Phase 2 | Pending |
-| DOCS-02 | Phase 2 | Pending |
-| DOCS-03 | Phase 2 | Pending |
-| DOCS-04 | Phase 2 | Pending |
-| DOCS-05 | Phase 2 | Pending |
-| REL-01 | Phase 3 | Pending |
-| HELM-01 | Phase 3 | Pending |
-| HELM-02 | Phase 3 | Pending |
-| HELM-03 | Phase 3 | Pending |
-| HELM-04 | Phase 3 | Pending |
-| REL-02 | Phase 3 | Pending |
-| REL-03 | Phase 4 | Pending |
-| REL-04 | Phase 4 | Pending |
+| COMM-01 | Phase 1 - Foundation Files | Pending |
+| COMM-02 | Phase 1 - Foundation Files | Pending |
+| COMM-03 | Phase 1 - Foundation Files | Pending |
+| FIX-01 | Phase 1 - Foundation Files | Pending |
+| FIX-02 | Phase 1 - Foundation Files | Pending |
+| META-01 | Phase 1 - Foundation Files | Pending |
+| DOCS-01 | Phase 2 - Documentation Site | Pending |
+| DOCS-02 | Phase 2 - Documentation Site | Pending |
+| DOCS-03 | Phase 2 - Documentation Site | Pending |
+| DOCS-04 | Phase 2 - Documentation Site | Pending |
+| DOCS-05 | Phase 2 - Documentation Site | Pending |
+| HELM-01 | Phase 3 - Release Automation | Pending |
+| HELM-02 | Phase 3 - Release Automation | Pending |
+| HELM-03 | Phase 3 - Release Automation | Pending |
+| HELM-04 | Phase 3 - Release Automation | Pending |
+| REL-01 | Phase 3 - Release Automation | Pending |
+| REL-02 | Phase 3 - Release Automation | Pending |
+| REL-03 | Phase 4 - Launch | Pending |
+| REL-04 | Phase 4 - Launch | Pending |
 
 **Coverage:**
 - v1 requirements: 19 total
 - Mapped to phases: 19
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after initial definition*
+*Last updated: 2026-02-23 after roadmap creation*
