@@ -35,12 +35,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. CODE_OF_CONDUCT.md (Contributor Covenant v2.1) is present at repo root
   4. `pulltrace_pull_errors_total` counter increments when a pull completes with a non-empty Error field (verifiable via Prometheus /metrics)
   5. LayerDetail component displays non-zero bytesPerSec and a mediaType string for an active layer pull
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Author CONTRIBUTING.md, CHANGELOG.md, CODE_OF_CONDUCT.md
-- [ ] 01-02: Fix FIX-01 (PullErrors metric) and FIX-02 (layer bytesPerSec/mediaType)
-- [ ] 01-03: Set GitHub repo description, topics, and social preview image (META-01)
+- [ ] 01-01-PLAN.md — Author CONTRIBUTING.md (Docker workaround), CHANGELOG.md, and CODE_OF_CONDUCT.md v2.1
+- [ ] 01-02-PLAN.md — Fix PullErrors metric increment (FIX-01) and layer bytesPerSec/mediaType population (FIX-02)
+- [ ] 01-03-PLAN.md — Set GitHub repo topics via gh CLI and upload social preview image (META-01)
 
 ### Phase 2: Documentation Site
 **Goal**: A stranger can navigate to `https://d44b.github.io/pulltrace/` and find enough information to install, configure, and understand Pulltrace without reading the source code
