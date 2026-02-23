@@ -142,3 +142,18 @@ Open an issue at [github.com/d44b/pulltrace/issues](https://github.com/d44b/pull
 - Expected vs. actual behavior (for bugs).
 - Your environment: Kubernetes version, containerd version, Pulltrace version.
 
+## Release Checklist
+
+The following steps are required after each new release tag is pushed and CI completes.
+
+### Social preview image
+
+GitHub does not provide an API for uploading a social preview image. This step must be performed manually in the GitHub web UI:
+
+1. Go to the repository settings: https://github.com/d44b/pulltrace/settings
+2. Scroll down to **Social preview** under the **General** section.
+3. Click **Edit** and upload a PNG or JPEG image (recommended: 1280x640px).
+4. Click **Save changes**.
+
+This image is shown when the repository URL is shared on social media (Twitter/X, LinkedIn, Slack, etc.). Without it, GitHub shows a generic preview.
+

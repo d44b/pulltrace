@@ -9,12 +9,12 @@ Requirements for the v0.2 Housekeeping milestone.
 
 ### Maintenance
 
-- [ ] **MAINT-01**: CONTRIBUTING.md dead link on line 147 (CODE_OF_CONDUCT.md reference) is removed or replaced
-- [ ] **MAINT-02**: CI helm repo index uses `--merge` flag so v0.2.0 chart release preserves the v0.1.0 chart entry
+- [x] **MAINT-01**: CONTRIBUTING.md dead link on line 147 (CODE_OF_CONDUCT.md reference) is removed or replaced
+- [x] **MAINT-02**: CI helm repo index uses `--merge` flag so v0.2.0 chart release preserves the v0.1.0 chart entry
 
 ### Community
 
-- [ ] **COMM-01**: GitHub repository has a social preview image visible when shared on social media (manual upload via Settings)
+- [x] **COMM-01**: GitHub repository has a social preview image visible when shared on social media (manual upload via Settings)
 
 ### Validation
 
@@ -58,9 +58,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MAINT-01 | Phase 5 | Pending |
-| MAINT-02 | Phase 5 | Pending |
-| COMM-01 | Phase 5 | Pending |
+| MAINT-01 | Phase 5 | Complete |
+| MAINT-02 | Phase 5 | Complete |
+| COMM-01 | Phase 5 | Complete |
 | VALID-01 | Phase 6 | Pending |
 | VALID-02 | Phase 6 | Pending |
 | VALID-03 | Phase 6 | Pending |
@@ -74,4 +74,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after v0.2 roadmap creation*
+*Last updated: 2026-02-23 after Phase 5 completion*
