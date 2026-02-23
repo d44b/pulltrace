@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 4 of 4 (Launch)
-Plan: 1 of 2 completed in current phase
-Status: Plan 04-01 COMPLETE — GHCR packages public, Plan 04-02 ready
-Last activity: 2026-02-23 — All three GHCR packages set to public; Plan 04-02 (push v0.1.0 tag) unblocked
+Plan: 2 of 2 completed in current phase
+Status: PHASE 4 COMPLETE — v0.1.0 tag pushed, CI all 7 jobs green, all artifacts live and publicly reachable
+Last activity: 2026-02-23 — v0.1.0 artifacts verified: Docker images pull unauthenticated, GitHub Release with .tgz, Helm classic repo and OCI chart reachable, docs site intact
 
-Progress: [████████░░] 80% (Phase 4 plan 1/2 complete)
+Progress: [██████████] 100% (Phase 4 plan 2/2 complete — ALL PHASES DONE)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 6min
-- Total execution time: 36min
+- Total plans completed: 8
+- Average duration: ~5min
+- Total execution time: ~38min
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [████████░░] 80% (Phase 4 plan 1/2 complete)
 | 01-foundation-files | 3 | 17min | 6min |
 | 02-documentation-site | 2 | 18min | 9min |
 | 03-release-automation | 2 | 2min | 1min |
+| 04-launch | 2 | 7min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (8min), 02-02 (10min), 03-01 (1min), 03-02 (1min)
+- Last 5 plans: 02-02 (10min), 03-01 (1min), 03-02 (1min), 04-01 (5min), 04-02 (2min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -43,6 +44,7 @@ Progress: [████████░░] 80% (Phase 4 plan 1/2 complete)
 | Phase 03-release-automation P01 | 1min | 2 tasks | 2 files |
 | Phase 03-release-automation P02 | 1min | 1 tasks | 1 files |
 | Phase 04-launch P01 | 5min | 2 tasks | 0 files |
+| Phase 04-launch P02 | 2min | 3 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -65,6 +67,7 @@ Recent decisions affecting current work:
 - [Phase 03-release-automation]: needs: [helm-release] not needs: [docker] for github-release job — ensures release appears only after Helm index is live
 - [Phase 04-launch]: GHCR v2 /tags/list always returns 401 regardless of visibility — use gh api /users/{owner}/packages/container/{name} to verify package visibility
 - [Phase 04-launch]: All three GHCR packages (pulltrace-agent, pulltrace-server, charts/pulltrace) set to public before v0.1.0 tag push — Plan 04-02 unblocked
+- [Phase 04-launch]: v0.1.0 tag was already on origin from prior session; CI run #22316078048 all 7 jobs green; all 8 post-launch artifact checks passed
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None — GHCR packages blocker resolved (all three packages set to public in Pla
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 04-01-PLAN.md — GHCR packages public, Plan 04-02 ready
+Stopped at: Completed 04-02-PLAN.md — v0.1.0 artifacts live, all phases done, project announcement-ready
 Resume file: None
