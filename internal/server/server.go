@@ -389,10 +389,21 @@ func (s *Server) processReport(report model.AgentReport) {
 			ls := model.LayerStatus{
 				PullID:          key,
 				Digest:          layer.Digest,
+				MediaType:       layer.MediaType,
 				TotalBytes:      layer.TotalBytes,
 				DownloadedBytes: layer.DownloadedBytes,
 				TotalKnown:      layer.TotalKnown,
 			}
+
+			layerKey := key + ":layer:" + layer.Digest
+			lrc, ok := s.rates[layerKey]
+			if !ok {
+				lrc = model.NewRateCalculator(10 * time.Second)
+				s.rates[layerKey] = lrc
+			}
+			lrc.Add(layer.DownloadedBytes)
+			ls.BytesPerSec = lrc.Rate()
+
 			if layer.TotalKnown && layer.TotalBytes > 0 {
 				ls.Percent = float64(layer.DownloadedBytes) / float64(layer.TotalBytes) * 100
 			}
@@ -463,6 +474,9 @@ func (s *Server) processReport(report model.AgentReport) {
 		metrics.PullsActive.Dec()
 		metrics.PullDurationSeconds.Observe(now.Sub(pull.StartedAt).Seconds())
 		metrics.PullBytesTotal.Add(float64(pull.TotalBytes))
+		if pull.Error != "" {
+			metrics.PullErrors.Inc()
+		}
 
 		event := model.PullEvent{
 			SchemaVersion: model.SchemaVersion,
@@ -616,6 +630,12 @@ func (s *Server) cleanup() {
 			delete(s.pulls, key)
 			delete(s.rates, key)
 			delete(s.lastSeen, key)
+			layerPrefix := key + ":layer:"
+			for rateKey := range s.rates {
+				if strings.HasPrefix(rateKey, layerPrefix) {
+					delete(s.rates, rateKey)
+				}
+			}
 			continue
 		}
 		if pull.CompletedAt == nil {
