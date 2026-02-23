@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation Files** - Community files, bug fixes, and repo metadata needed before anything else
 - [ ] **Phase 2: Documentation Site** - MkDocs Material site on GitHub Pages covering installation, configuration, and architecture
-- [ ] **Phase 3: Release Automation** - Classic Helm repo index on gh-pages and GitHub Release CI job wired and tested
+- [x] **Phase 3: Release Automation** - Classic Helm repo index on gh-pages and GitHub Release CI job wired and tested (completed 2026-02-23)
 - [ ] **Phase 4: Launch** - GHCR packages made public, v0.1.0 tag pushed, all artifacts verified live
 
 ## Phase Details
@@ -97,5 +97,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation Files | 0/3 | Not started | - |
 | 2. Documentation Site | 0/2 | Not started | - |
-| 3. Release Automation | 1/2 | In Progress|  |
+| 3. Release Automation | 2/2 | Complete   | 2026-02-23 |
 | 4. Launch | 0/2 | Not started | - |

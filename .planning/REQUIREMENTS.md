@@ -31,7 +31,7 @@ Requirements for the v0.1.0 public release. Each maps to roadmap phases.
 ### Release Infrastructure
 
 - [x] **REL-01**: `ci.yml` has `contents: write` permission (currently `contents: read` — blocks GitHub Release creation)
-- [ ] **REL-02**: Pushing `git tag v0.1.0` triggers CI to create a GitHub Release with title, body (what's new, install commands, compatibility), and changelog link
+- [x] **REL-02**: Pushing `git tag v0.1.0` triggers CI to create a GitHub Release with title, body (what's new, install commands, compatibility), and changelog link
 - [ ] **REL-03**: All three GHCR packages (`pulltrace-agent`, `pulltrace-server`, `charts/pulltrace`) are set to public visibility
 - [ ] **REL-04**: v0.1.0 tag is pushed and all artifacts are live: Docker images at GHCR, Helm chart at `ghcr.io/d44b/charts/pulltrace` (OCI) and `d44b.github.io/pulltrace/charts` (classic), GitHub Release created
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HELM-03 | Phase 3 - Release Automation | Complete |
 | HELM-04 | Phase 3 - Release Automation | Complete |
 | REL-01 | Phase 3 - Release Automation | Complete |
-| REL-02 | Phase 3 - Release Automation | Pending |
+| REL-02 | Phase 3 - Release Automation | Complete |
 | REL-03 | Phase 4 - Launch | Pending |
 | REL-04 | Phase 4 - Launch | Pending |
 

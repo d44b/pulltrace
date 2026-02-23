@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 3 of 4 (Release Automation)
-Plan: 1 of 2 in current phase (COMPLETE)
-Status: Phase 3 in progress
-Last activity: 2026-02-23 — Completed 03-01 (CI permissions fix, Helm pages pipeline, concurrency group)
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase 3 COMPLETE
+Last activity: 2026-02-23 — Completed 03-02 (github-release job, softprops/action-gh-release@v2, inline release body)
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
@@ -29,10 +29,10 @@ Progress: [██████░░░░] 62%
 |-------|-------|-------|----------|
 | 01-foundation-files | 3 | 17min | 6min |
 | 02-documentation-site | 2 | 18min | 9min |
-| 03-release-automation | 1 | 1min | 1min |
+| 03-release-automation | 2 | 2min | 1min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (1min), 02-01 (8min), 02-02 (10min), 03-01 (1min)
+- Last 5 plans: 02-01 (8min), 02-02 (10min), 03-01 (1min), 03-02 (1min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -41,6 +41,7 @@ Progress: [██████░░░░] 62%
 | Phase 02-documentation-site P01 | 8min | 2 tasks | 9 files |
 | Phase 02-documentation-site P02 | 10min | 3 tasks | 7 files |
 | Phase 03-release-automation P01 | 1min | 2 tasks | 2 files |
+| Phase 03-release-automation P02 | 1min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-files]: GitHub topics set via gh CLI (scriptable, idempotent); social preview deferred to manual upload via Settings UI
 - [Phase 03-release-automation]: No --merge flag for v0.1.0 helm repo index (no prior index.yaml exists; use --merge for v0.2.0+)
 - [Phase 03-release-automation]: cancel-in-progress:false on deploy-gh-pages concurrency — never abort an in-flight gh-pages push
+- [Phase 03-release-automation]: needs: [helm-release] not needs: [docker] for github-release job — ensures release appears only after Helm index is live
 
 ### Pending Todos
 
@@ -72,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 03-01-PLAN.md — CI permissions fix (contents:write), Helm pages pipeline (helm repo index + peaceiris gh-pages), shared deploy-gh-pages concurrency group
+Stopped at: Completed 03-02-PLAN.md — github-release job added to ci.yml (softprops/action-gh-release@v2, inline body with Helm classic + OCI install commands, artifact sharing via download-artifact@v4)
 Resume file: None
