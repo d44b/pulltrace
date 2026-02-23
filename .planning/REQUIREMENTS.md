@@ -42,7 +42,7 @@ Requirements for the v0.1.0 public release. Each maps to roadmap phases.
 
 ### Repository Metadata
 
-- [ ] **META-01**: GitHub repository has description set, topics added (`kubernetes`, `monitoring`, `containers`, `helm`, `containerd`), and a social preview image (OG image)
+- [x] **META-01**: GitHub repository has description set, topics added (`kubernetes`, `monitoring`, `containers`, `helm`, `containerd`), and a social preview image (OG image)
 
 ## v2 Requirements
 
@@ -88,7 +88,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMM-03 | Removed — CODE_OF_CONDUCT.md intentionally omitted | N/A |
 | FIX-01 | Phase 1 - Foundation Files | Pending |
 | FIX-02 | Phase 1 - Foundation Files | Pending |
-| META-01 | Phase 1 - Foundation Files | Pending |
+| META-01 | Phase 1 - Foundation Files | Complete |
 | DOCS-01 | Phase 2 - Documentation Site | Pending |
 | DOCS-02 | Phase 2 - Documentation Site | Pending |
 | DOCS-03 | Phase 2 - Documentation Site | Pending |
