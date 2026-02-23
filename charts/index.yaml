@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  pulltrace:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-02-23T17:09:20.443517212Z"
+    description: Kubernetes image pull tracing and monitoring
+    digest: 0773d7230dd7be37cb796524eca8d6e2574dd110128d6ee3a65d79647ce7dfae
+    name: pulltrace
+    type: application
+    urls:
+    - https://d44b.github.io/pulltrace/charts/pulltrace-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-02-23T17:09:20.442970269Z"
